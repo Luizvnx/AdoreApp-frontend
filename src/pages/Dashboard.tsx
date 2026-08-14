@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Home, LogOut, ChevronRight } from 'lucide-react';
+import { UserPlus, Home, LogOut, ChevronRight, Users } from 'lucide-react';
 import type { User } from '../types'; // Importando nossa tipagem como type-only
 
 export default function Dashboard() {
@@ -14,7 +14,7 @@ export default function Dashboard() {
   };
 
   const handleLogout = (): void => {
-    // Lógica de limpar token viria aqui
+    localStorage.removeItem('currentUser');
     navigate('/');
   };
 
@@ -32,19 +32,22 @@ export default function Dashboard() {
             <p className="font-semibold text-cyan-400 text-xs">{currentUser.role.replace('_', ' ')}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-slate-400 hover:text-white">
+        <button onClick={handleLogout} className="text-slate-400 hover:text-white" title="Sair">
           <LogOut size={20} />
         </button>
       </header>
 
-      {/* ... (O restante do layout do Dashboard permanece idêntico ao anterior, 
-           o Tailwind lida com a estilização da mesma forma em .jsx ou .tsx) ... */}
-
       <main className="p-6 space-y-6">
         <section className="grid grid-cols-2 gap-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-center">
-            <span className="text-slate-400 text-xs mb-1">Novos Visitantes</span>
-            <span className="text-2xl font-bold text-white">24</span>
+          <div 
+            onClick={() => navigate('/visitantes')}
+            className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 flex flex-col justify-center cursor-pointer transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-xs mb-1">Novos Visitantes</span>
+              <ChevronRight size={14} className="text-slate-500 group-hover:text-cyan-400 transition-colors" />
+            </div>
+            <span className="text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">24</span>
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-center">
             <span className="text-slate-400 text-xs mb-1">Membros em GCs</span>
@@ -54,6 +57,7 @@ export default function Dashboard() {
 
         <section>
           <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
+
           <div className="space-y-3">
             <button
               onClick={() => navigate('/cadastro/visitantes')}
@@ -69,6 +73,21 @@ export default function Dashboard() {
               </div>
               <ChevronRight className="text-cyan-500" size={20} />
             </button>
+
+            <button
+              onClick={() => navigate('/visitantes')}
+              className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
+                  <Users size={24} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold text-white">Lista de Visitantes</h4>
+                  <p className="text-xs text-slate-400">Ver e gerenciar cadastrados</p>
+                </div>
+              </div>
+              <ChevronRight className="text-blue-500" size={20} />
+            </button>
           </div>
         </section>
       </main>
@@ -83,9 +102,15 @@ export default function Dashboard() {
         </button>
         <button
           onClick={() => navigate('/cadastro/visitantes')}
-          className="flex flex-col items-center gap-1 text-cyan-400">
+          className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
           <UserPlus size={20} />
           <span className="text-[10px] font-medium">Cadastrar</span>
+        </button>
+        <button
+          onClick={() => navigate('/visitantes')}
+          className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
+          <Users size={20} />
+          <span className="text-[10px] font-medium">Visitantes</span>
         </button>
       </nav>
     </div>
