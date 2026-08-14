@@ -48,8 +48,8 @@ export default function VisitorRegistration() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white font-sans pb-10">
-            <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center gap-4 sticky top-0 z-10">
+        <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
+            <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center gap-4 sticky top-0 z-10 pt-safe">
                 <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
                     <ArrowLeft size={24} />
                 </button>
@@ -59,7 +59,7 @@ export default function VisitorRegistration() {
                 </div>
             </header>
 
-            <main className="p-6">
+            <main className="p-4 sm:p-6 max-w-lg mx-auto w-full">
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Dados Pessoais */}
                     <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">

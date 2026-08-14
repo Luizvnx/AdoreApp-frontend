@@ -1,0 +1,17 @@
+{
+  "short_name": "AdorehApp",
+  "name": "AdorehApp - Gestão Integrada de Igreja",
+  "description": "Aplicativo de gestão integrada para a sua Igreja",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32 24x24 16x16"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "display": "standalone",
+  "orientation": "portrait"
+}

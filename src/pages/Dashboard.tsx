@@ -19,8 +19,8 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans pb-20">
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-5 flex items-center justify-between sticky top-0 z-10">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-24">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10 pt-safe">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-700 p-0.5">
             <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
@@ -32,13 +32,13 @@ export default function Dashboard() {
             <p className="font-semibold text-cyan-400 text-xs">{currentUser.role.replace('_', ' ')}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-slate-400 hover:text-white" title="Sair">
+        <button onClick={handleLogout} className="text-slate-400 hover:text-white p-2" title="Sair">
           <LogOut size={20} />
         </button>
       </header>
 
-      <main className="p-6 space-y-6">
-        <section className="grid grid-cols-2 gap-4">
+      <main className="p-4 sm:p-6 space-y-6 max-w-lg mx-auto w-full">
+        <section className="grid grid-cols-2 gap-3 sm:gap-4">
           <div 
             onClick={() => navigate('/visitantes')}
             className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 flex flex-col justify-center cursor-pointer transition-all group"
@@ -56,7 +56,7 @@ export default function Dashboard() {
         </section>
 
         <section>
-          <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
+          <h3 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
 
           <div className="space-y-3">
             <button
@@ -92,7 +92,7 @@ export default function Dashboard() {
         </section>
       </main>
 
-      <nav className="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 flex items-center justify-around py-3 px-2 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 w-full max-w-full bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 flex items-center justify-around py-3 px-2 pb-safe z-20">
         {/* Ícones do menu inferior */}
         <button
           onClick={() => navigate('/dashboard')}

@@ -34,12 +34,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"></div>
+    <div className="min-h-screen w-full max-w-full overflow-hidden bg-slate-950 text-white font-sans flex items-center justify-center p-4 sm:p-6 relative pt-safe pb-safe">
+      {/* Background glow effects - envolto em overflow-hidden */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-cyan-500/10 blur-[120px]"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-blue-600/10 blur-[120px]"></div>
+      </div>
 
-      <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-8 shadow-2xl relative z-10 transition-all hover:border-slate-700/50">
+      <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 transition-all hover:border-slate-700/50">
         
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8">

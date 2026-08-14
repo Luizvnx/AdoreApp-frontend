@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+/* Trava de transbordamento horizontal e otimização de toque mobile */
+html, body, #app {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Evita auto-zoom do iOS Safari ao focar em inputs/selects */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Classes utilitárias para Safe Area (iOS notch e barra home) */
+.pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
