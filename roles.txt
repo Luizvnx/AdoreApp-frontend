@@ -1,0 +1,6 @@
+enum UserRole {
+  SUPER_ADMIN = 'SUPER_ADMIN', // Pastores e Liderança Maior (Acesso total)
+  ADMIN_WELCOME = 'ADMIN_WELCOME', // Líder do Acolhimento (Pode gerenciar visitantes)
+  ADMIN_WORSHIP = 'ADMIN_WORSHIP', // Líder de Louvor (Acesso a escalas/músicas, mas não a visitantes)
+  MEMBER = 'MEMBER' // Membro comum (Apenas visualiza seus próprios dados)
+}

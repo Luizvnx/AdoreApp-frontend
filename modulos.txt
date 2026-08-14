@@ -1,0 +1,26 @@
+src/
+├── App.tsx            # Onde ficará a configuração das rotas
+├── main.tsx           # Ponto de entrada padrão do Vite
+└── pages/             # Nossas telas isoladas
+    ├── Login.tsx      # O componente da tela de login
+    └── Dashboard.tsx  # O componente da tela inicial
+├── config/                 # Configurações de Banco de dados, variáveis de ambiente, JWT
+├── shared/                 # Código compartilhado entre toda a aplicação
+│   ├── middlewares/        # Middlewares (ex: verificação de token, bloqueio por Role)
+│   ├── errors/             # Tratamento global de erros
+│   └── utils/              # Funções utilitárias
+└── modules/                # Módulos principais do sistema
+    ├── auth/               # Responsável apenas pelo Login e geração de Tokens
+    │   ├── controllers/
+    │   ├── services/
+    │   └── dtos/
+    ├── users/              # Gestão de Membros, Pastores e Líderes
+    │   ├── entities/       # Modelos de banco de dados (User, Roles)
+    │   ├── repositories/
+    │   ├── services/
+    │   └── controllers/
+    └── visitors/           # Gestão do Cadastro de Visitantes
+        ├── entities/       # Modelo do Visitante
+        ├── repositories/
+        ├── services/
+        └── controllers/
