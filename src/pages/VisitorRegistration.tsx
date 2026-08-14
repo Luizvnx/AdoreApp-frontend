@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Save, MapPin, Phone, User, Heart } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Phone, User, Heart } from 'lucide-react';
 
 export default function VisitorRegistration() {
     const navigate = useNavigate();
