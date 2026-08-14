@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, MapPin, Trash2, Phone, UserPlus, UserCheck, Edit3, Mail, X, Save } from 'lucide-react';
+import { ArrowLeft, User, Trash2, Phone, UserPlus, UserCheck, Edit3, Mail, X, Save } from 'lucide-react';
 import { api } from '../services/api';
 
-// Interface baseada no Prisma
 interface Visitor {
     id: string;
     fullName: string;
@@ -137,12 +136,12 @@ export default function VisitorList() {
                 ) : (
                     <div className="space-y-4">
                         {visitors.map(visitor => (
-                            <div 
-                                key={visitor.id} 
+                            <div
+                                key={visitor.id}
                                 className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col gap-3 transition-all"
                             >
                                 <div className="flex justify-between items-start">
-                                    <div 
+                                    <div
                                         onClick={() => openEditModal(visitor)}
                                         className="flex items-center gap-3 cursor-pointer group flex-1"
                                     >
@@ -159,15 +158,15 @@ export default function VisitorList() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <button 
-                                            onClick={() => openEditModal(visitor)} 
+                                        <button
+                                            onClick={() => openEditModal(visitor)}
                                             className="text-slate-400 hover:text-cyan-400 p-2 transition-colors"
                                             title="Editar Visitante"
                                         >
                                             <Edit3 size={18} />
                                         </button>
-                                        <button 
-                                            onClick={() => handleDelete(visitor.id)} 
+                                        <button
+                                            onClick={() => handleDelete(visitor.id)}
                                             className="text-red-500/70 hover:text-red-500 p-2 transition-colors"
                                             title="Excluir Visitante"
                                         >
@@ -193,7 +192,7 @@ export default function VisitorList() {
                                             Deseja entrar em GC
                                         </div>
                                     ) : <div></div>}
-                                    
+
                                     <button
                                         onClick={() => handleConvert(visitor.id)}
                                         className="flex items-center gap-1.5 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg shadow-green-500/20 transition-all active:scale-95 ml-auto"
@@ -217,7 +216,7 @@ export default function VisitorList() {
                                 <Edit3 size={18} className="text-cyan-400" />
                                 Editar Visitante
                             </h2>
-                            <button 
+                            <button
                                 onClick={() => setEditingVisitor(null)}
                                 className="text-slate-400 hover:text-white p-1 rounded-lg"
                             >
@@ -281,11 +280,11 @@ export default function VisitorList() {
 
                             <div className="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
                                 <span className="text-xs text-slate-300">Deseja entrar em um GC?</span>
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     checked={editFormData.wantsToJoinGC}
                                     onChange={(e) => setEditFormData({ ...editFormData, wantsToJoinGC: e.target.checked })}
-                                    className="w-4 h-4 accent-cyan-500" 
+                                    className="w-4 h-4 accent-cyan-500"
                                 />
                             </div>
 
