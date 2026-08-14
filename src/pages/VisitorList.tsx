@@ -1,22 +1,38 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, MapPin, Trash2, Phone, UserPlus } from 'lucide-react';
+import { ArrowLeft, User, MapPin, Trash2, Phone, UserPlus, UserCheck, Edit3, Mail, X, Save } from 'lucide-react';
 import { api } from '../services/api';
 
 // Interface baseada no Prisma
 interface Visitor {
     id: string;
     fullName: string;
+    email?: string;
     phone?: string;
     neighborhood?: string;
+    fullAddress?: string;
     wantsToJoinGC: boolean;
+    isBaptized?: boolean;
     visitDate: string;
+    status: string;
 }
 
 export default function VisitorList() {
     const navigate = useNavigate();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Estado para edição
+    const [editingVisitor, setEditingVisitor] = useState<Visitor | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        fullName: '',
+        email: '',
+        phone: '',
+        neighborhood: '',
+        fullAddress: '',
+        wantsToJoinGC: false,
+    });
+    const [savingEdit, setSavingEdit] = useState(false);
 
     // Busca inicial dos dados
     useEffect(() => {
@@ -38,11 +54,53 @@ export default function VisitorList() {
         if (window.confirm('Tem certeza que deseja excluir este visitante?')) {
             try {
                 await api.delete(`/visitors/${id}`);
-                // Remove da lista localmente para não precisar fazer um novo fetch
                 setVisitors(visitors.filter(v => v.id !== id));
             } catch (error) {
                 alert('Erro ao excluir visitante.');
             }
+        }
+    };
+
+    const handleConvert = async (id: string) => {
+        if (window.confirm('Tem certeza que deseja promover este visitante a membro oficial?')) {
+            try {
+                const res = await api.put(`/visitors/${id}/convert`);
+                const { credentials, message } = res.data;
+                alert(`${message}\n\nE-mail de Acesso: ${credentials.email}\nSenha Temporária: ${credentials.password}`);
+                fetchVisitors(); // Recarrega a lista para remover o membro convertido
+            } catch (error: any) {
+                alert(error.response?.data?.error || 'Erro ao converter visitante.');
+            }
+        }
+    };
+
+    const openEditModal = (visitor: Visitor) => {
+        setEditingVisitor(visitor);
+        setEditFormData({
+            fullName: visitor.fullName || '',
+            email: visitor.email || '',
+            phone: visitor.phone || '',
+            neighborhood: visitor.neighborhood || '',
+            fullAddress: visitor.fullAddress || '',
+            wantsToJoinGC: visitor.wantsToJoinGC || false,
+        });
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingVisitor) return;
+
+        setSavingEdit(true);
+        try {
+            await api.put(`/visitors/${editingVisitor.id}`, editFormData);
+            alert('Dados do visitante atualizados!');
+            setEditingVisitor(null);
+            fetchVisitors();
+        } catch (error: any) {
+            console.error(error);
+            alert(error.response?.data?.error || 'Erro ao atualizar visitante.');
+        } finally {
+            setSavingEdit(false);
         }
     };
 
@@ -55,7 +113,7 @@ export default function VisitorList() {
                     </button>
                     <div>
                         <h1 className="text-lg font-bold text-white">Lista de Visitantes</h1>
-                        <p className="text-xs text-cyan-400">{visitors.length} cadastrados</p>
+                        <p className="text-xs text-cyan-400">{visitors.length} pendentes em acompanhamento</p>
                     </div>
                 </div>
                 <button
@@ -73,49 +131,191 @@ export default function VisitorList() {
                         <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                 ) : visitors.length === 0 ? (
-                    <div className="text-center text-slate-500 mt-10">Nenhum visitante cadastrado.</div>
+                    <div className="text-center text-slate-500 mt-10 p-6 bg-slate-900 border border-slate-800 rounded-2xl">
+                        Nenhum visitante pendente de conversão no momento.
+                    </div>
                 ) : (
                     <div className="space-y-4">
                         {visitors.map(visitor => (
-                            <div key={visitor.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+                            <div 
+                                key={visitor.id} 
+                                className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 flex flex-col gap-3 transition-all"
+                            >
                                 <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-full">
+                                    <div 
+                                        onClick={() => openEditModal(visitor)}
+                                        className="flex items-center gap-3 cursor-pointer group flex-1"
+                                    >
+                                        <div className="bg-cyan-500/20 text-cyan-400 p-2.5 rounded-full group-hover:scale-105 transition-transform">
                                             <User size={20} />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-white">{visitor.fullName}</h3>
+                                            <h3 className="font-semibold text-white group-hover:text-cyan-400 transition-colors flex items-center gap-2">
+                                                {visitor.fullName}
+                                            </h3>
                                             <p className="text-xs text-slate-400">
                                                 Visita: {new Date(visitor.visitDate).toLocaleDateString('pt-BR')}
                                             </p>
                                         </div>
                                     </div>
-                                    <button onClick={() => handleDelete(visitor.id)} className="text-red-500/70 hover:text-red-500 p-2">
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button 
+                                            onClick={() => openEditModal(visitor)} 
+                                            className="text-slate-400 hover:text-cyan-400 p-2 transition-colors"
+                                            title="Editar Visitante"
+                                        >
+                                            <Edit3 size={18} />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(visitor.id)} 
+                                            className="text-red-500/70 hover:text-red-500 p-2 transition-colors"
+                                            title="Excluir Visitante"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-slate-800">
+                                <div className="grid grid-cols-2 gap-2 mt-1 pt-3 border-t border-slate-800/80">
                                     <div className="flex items-center gap-2 text-xs text-slate-300">
                                         <Phone size={14} className="text-cyan-500" />
                                         {visitor.phone || 'Sem telefone'}
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-300">
-                                        <MapPin size={14} className="text-cyan-500" />
-                                        {visitor.neighborhood || 'Bairro ñ info.'}
+                                    <div className="flex items-center gap-2 text-xs text-slate-300 truncate">
+                                        <Mail size={14} className="text-cyan-500 shrink-0" />
+                                        <span className="truncate">{visitor.email || 'Sem e-mail'}</span>
                                     </div>
                                 </div>
 
-                                {visitor.wantsToJoinGC && (
-                                    <div className="mt-2 text-xs font-semibold text-blue-400 bg-blue-900/20 px-3 py-1.5 rounded-lg inline-block w-fit">
-                                        Deseja entrar em GC
-                                    </div>
-                                )}
+                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/50">
+                                    {visitor.wantsToJoinGC ? (
+                                        <div className="text-xs font-semibold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50 px-3 py-1 rounded-lg">
+                                            Deseja entrar em GC
+                                        </div>
+                                    ) : <div></div>}
+                                    
+                                    <button
+                                        onClick={() => handleConvert(visitor.id)}
+                                        className="flex items-center gap-1.5 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg shadow-green-500/20 transition-all active:scale-95 ml-auto"
+                                    >
+                                        <UserCheck size={14} />
+                                        Tornar Membro
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </main>
+
+            {/* Modal de Edição de Visitante */}
+            {editingVisitor && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Edit3 size={18} className="text-cyan-400" />
+                                Editar Visitante
+                            </h2>
+                            <button 
+                                onClick={() => setEditingVisitor(null)}
+                                className="text-slate-400 hover:text-white p-1 rounded-lg"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveEdit} className="space-y-4">
+                            <div>
+                                <label className="text-xs font-semibold text-slate-400 uppercase">Nome Completo</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.fullName}
+                                    onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+                                    required
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-400 uppercase">E-mail</label>
+                                <input
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                                    placeholder="exemplo@email.com"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase">Telefone / Whats</label>
+                                    <input
+                                        type="text"
+                                        value={editFormData.phone}
+                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-slate-400 uppercase">Bairro</label>
+                                    <input
+                                        type="text"
+                                        value={editFormData.neighborhood}
+                                        onChange={(e) => setEditFormData({ ...editFormData, neighborhood: e.target.value })}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-slate-400 uppercase">Endereço Completo</label>
+                                <input
+                                    type="text"
+                                    value={editFormData.fullAddress}
+                                    onChange={(e) => setEditFormData({ ...editFormData, fullAddress: e.target.value })}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                                <span className="text-xs text-slate-300">Deseja entrar em um GC?</span>
+                                <input 
+                                    type="checkbox" 
+                                    checked={editFormData.wantsToJoinGC}
+                                    onChange={(e) => setEditFormData({ ...editFormData, wantsToJoinGC: e.target.checked })}
+                                    className="w-4 h-4 accent-cyan-500" 
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingVisitor(null)}
+                                    className="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-400 hover:text-white text-xs font-semibold"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingEdit}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all"
+                                >
+                                    {savingEdit ? (
+                                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : (
+                                        <>
+                                            <Save size={16} />
+                                            Salvar Alterações
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

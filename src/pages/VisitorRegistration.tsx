@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, MapPin, Phone, User, Heart } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Phone, User, Heart, Mail } from 'lucide-react';
 import { api } from '../services/api'; // Importando nossa API
 
 export default function VisitorRegistration() {
@@ -10,6 +10,7 @@ export default function VisitorRegistration() {
     // Estado para armazenar os dados do formulário
     const [formData, setFormData] = useState({
         fullName: '',
+        email: '',
         birthDate: '',
         maritalStatus: 'SOLTEIRO',
         phone: '',
@@ -39,9 +40,10 @@ export default function VisitorRegistration() {
             await api.post('/visitors', formData);
             alert('Visitante cadastrado com sucesso!');
             navigate('/visitantes');
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert('Erro ao cadastrar visitante. Verifique o console.');
+            const msg = error.response?.data?.error || 'Erro ao cadastrar visitante.';
+            alert(msg);
         } finally {
             setLoading(false);
         }
@@ -70,6 +72,16 @@ export default function VisitorRegistration() {
                         <div>
                             <label className="text-xs text-slate-400 uppercase tracking-wider">Nome Completo</label>
                             <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none" />
+                        </div>
+
+                        <div>
+                            <label className="text-xs text-slate-400 uppercase tracking-wider">E-mail (Opcional)</label>
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">
+                                    <Mail size={16} />
+                                </span>
+                                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="exemplo@email.com" className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-white outline-none" />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
