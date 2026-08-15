@@ -1,19 +1,20 @@
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck } from 'lucide-react';
 import type { User } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const savedUser = localStorage.getItem('currentUser');
-  const currentUser: User = savedUser ? JSON.parse(savedUser) : {
+  const currentUser: User = user || {
     id: '123',
-    name: 'Pr. João',
-    role: 'SUPER_ADMIN',
+    name: 'Membro',
+    role: 'MEMBER',
   };
 
   const handleLogout = (): void => {
-    localStorage.removeItem('currentUser');
+    logout();
     navigate('/');
   };
 
@@ -27,7 +28,10 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-700 p-0.5">
             <div className="w-full h-full bg-white rounded-full flex items-center justify-center">
-              <span className="text-cyan-600 font-bold text-xs">IG</span>
+              <button onClick={() => navigate('/perfil')} className="w-full h-full flex items-center justify-center hover:cursor-pointer" >
+
+                <span className="text-cyan-600 font-bold text-xs">IG</span>
+              </button>
             </div>
           </div>
           <div>
@@ -43,7 +47,7 @@ export default function Dashboard() {
       <main className="p-4 sm:p-6 space-y-6 max-w-lg mx-auto w-full">
         <section className="grid grid-cols-2 gap-3 sm:gap-4">
           {canSeeVisitors && (
-            <div 
+            <div
               onClick={() => navigate('/visitantes')}
               className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-4 flex flex-col justify-center cursor-pointer transition-all group"
             >
@@ -55,7 +59,7 @@ export default function Dashboard() {
             </div>
           )}
           {canSeeMembers && (
-            <div 
+            <div
               onClick={() => navigate('/membros')}
               className="bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col justify-center cursor-pointer transition-all group"
             >
@@ -128,22 +132,22 @@ export default function Dashboard() {
                 <ChevronRight className="text-blue-500" size={20} />
               </button>
             )}
-            
+
             {currentUser.role === 'MEMBER' && (
-               <button
-                 onClick={() => navigate(`/membros/${currentUser.id}`)}
-                 className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
-                 <div className="flex items-center gap-4">
-                   <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
-                     <UserCheck size={24} />
-                   </div>
-                   <div className="text-left">
-                     <h4 className="font-semibold text-white">Meu Perfil</h4>
-                     <p className="text-xs text-slate-400">Ver e atualizar meus dados</p>
-                   </div>
-                 </div>
-                 <ChevronRight className="text-blue-500" size={20} />
-               </button>
+              <button
+                onClick={() => navigate(`/membros/${currentUser.id}`)}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
+                    <UserCheck size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Meu Perfil</h4>
+                    <p className="text-xs text-slate-400">Ver e atualizar meus dados</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-blue-500" size={20} />
+              </button>
             )}
           </div>
         </section>

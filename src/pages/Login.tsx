@@ -1,36 +1,42 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, UserCheck, Eye, EyeOff } from 'lucide-react';
+import { Shield, Mail, Lock, UserCheck, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import type { UserRole } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('SUPER_ADMIN');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      alert('Por favor, preencha todos os campos.');
+      setErrorMessage('Por favor, preencha todos os campos.');
       return;
     }
-    
-    setLoading(true);
-    
-    // Simulating minor network latency for premium look and feel
-    setTimeout(() => {
-      // Save simulated user details to localStorage
-      localStorage.setItem('currentUser', JSON.stringify({
-        id: '123',
-        name: email.split('@')[0],
-        role: role
-      }));
-      setLoading(false);
+
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+      await login(email, password, role);
       navigate('/dashboard');
-    }, 800);
+    } catch (err: any) {
+      console.error('Erro de autenticação:', err);
+      setErrorMessage(
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        'Falha ao autenticar. Verifique seu e-mail e senha.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,7 +48,7 @@ export default function Login() {
       </div>
 
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 transition-all hover:border-slate-700/50">
-        
+
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 mb-4 flex items-center justify-center">
@@ -57,6 +63,14 @@ export default function Login() {
             Gestão Integrada para a sua Igreja
           </p>
         </div>
+
+        {/* Error message banner */}
+        {errorMessage && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center gap-3 text-red-400 text-sm animate-fade-in">
+            <AlertCircle size={20} className="shrink-0 text-red-400" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -73,7 +87,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="exemplo@igreja.com"
+                placeholder="exemplo@email.com"
                 className="w-full bg-slate-950/80 border border-slate-800 hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-slate-500 outline-none transition-all"
                 required
               />
