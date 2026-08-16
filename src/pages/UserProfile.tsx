@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut } from 'lucide-react';
 import { api } from '../services/api';
-import type { User as UserType } from '../types';
+import { useAuth } from '../context/AuthContext';
 
 export default function UserProfile() {
     const navigate = useNavigate();
+    const { user: currentUser, logout } = useAuth();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
-
-    // Resgata o usuário logado para obter o ID
-    const savedUser = localStorage.getItem('currentUser');
-    const currentUser: UserType | null = savedUser ? JSON.parse(savedUser) : null;
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -33,11 +30,10 @@ export default function UserProfile() {
 
         const fetchProfile = async () => {
             try {
-                // Simulação do preenchimento de dados
                 setFormData(prev => ({
                     ...prev,
                     fullName: currentUser.name || '',
-                    email: 'usuario@exemplo.com',
+                    email: currentUser.email || 'usuario@exemplo.com',
                     phone: '(79) 90000-0000',
                 }));
             } catch (error) {
@@ -79,14 +75,10 @@ export default function UserProfile() {
         }
     };
 
-    // Função para Deslogar e Limpar o Token
-    const handleLogout = () => {
+    // Função para Deslogar e Limpar o Cookie HttpOnly
+    const handleLogout = async () => {
         if (window.confirm('Tem certeza que deseja sair da sua conta?')) {
-            // 1. Limpa o token de autorização
-            localStorage.removeItem('authToken');
-            // 2. Limpa os dados do usuário
-            localStorage.removeItem('currentUser');
-            // 3. Redireciona para o Login
+            await logout();
             navigate('/');
         }
     };

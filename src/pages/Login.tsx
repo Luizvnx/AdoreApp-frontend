@@ -29,11 +29,18 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Erro de autenticação:', err);
-      setErrorMessage(
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        'Falha ao autenticar. Verifique seu e-mail e senha.'
-      );
+      if (err?.response?.status === 429) {
+        setErrorMessage(
+          err.response.data?.error ||
+          'Excesso de tentativas. Por favor, aguarde.'
+        );
+      } else {
+        setErrorMessage(
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          'E-mail ou senha incorretos.'
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -41,7 +48,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-hidden bg-slate-950 text-white font-sans flex items-center justify-center p-4 sm:p-6 relative pt-safe pb-safe">
-      {/* Background glow effects - envolto em overflow-hidden */}
+      {/* Background glow effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-cyan-500/10 blur-[120px]"></div>
         <div className="absolute bottom-[-20%] right-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-blue-600/10 blur-[120px]"></div>
@@ -139,7 +146,6 @@ export default function Login() {
                 <option value="ADMIN_WELCOME" className="bg-slate-900">ADMIN_WELCOME (Acolhimento)</option>
                 <option value="MEMBER" className="bg-slate-900">MEMBER (Membro Comum)</option>
               </select>
-              {/* Custom arrow for appearance-none select */}
               <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 pointer-events-none">
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                   <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
@@ -152,10 +158,13 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full relative overflow-hidden group bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-white font-semibold py-4 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center"
+            className="w-full relative overflow-hidden group bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-[0.98] text-white font-semibold py-4 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
           >
             {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Entrando...</span>
+              </>
             ) : (
               <span>Acessar Painel</span>
             )}

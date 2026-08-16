@@ -4,81 +4,68 @@ import type { User, UserRole } from '../types';
 
 interface AuthContextData {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string, role?: UserRole) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me usando o cookie HttpOnly
   useEffect(() => {
-    const savedToken = localStorage.getItem('authToken');
-    const savedUser = localStorage.getItem('currentUser');
-
-    if (savedToken && savedUser) {
+    const restoreSession = async () => {
       try {
-        setToken(savedToken);
-        setUser(JSON.parse(savedUser));
+        const response = await api.get('/auth/me');
+        if (response.data?.user) {
+          setUser(response.data.user);
+        }
       } catch (err) {
-        console.error('Erro ao restaurar sessão:', err);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
+        // Sessão não ativa ou expirada no cookie HttpOnly
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+
+    restoreSession();
   }, []);
 
-  const login = async (email: string, password: string, selectedRole: UserRole = 'SUPER_ADMIN') => {
-    setLoading(true);
+  const login = async (email: string, password: string, _selectedRole: UserRole = 'SUPER_ADMIN') => {
     try {
-      // Realiza a autenticação via Axios no backend de verdade
+      // O backend validará a credencial, definirá o Cookie HttpOnly e retornará os dados do usuário
       const response = await api.post('/auth/login', { email, password });
 
-      const authToken = response.data.token || response.data.accessToken;
-      const userData: User = response.data.user || {
-        id: response.data.id || 'usr_1',
-        name: response.data.name || email.split('@')[0],
-        role: response.data.role || selectedRole,
-      };
-
-      if (!authToken) {
-        throw new Error('Servidor não retornou um token de autenticação válido.');
+      if (!response.data?.user) {
+        throw new Error('Servidor não retornou os dados do usuário.');
       }
 
-      // Persiste no localStorage APENAS quando o backend autenticar com sucesso
-      localStorage.setItem('authToken', authToken);
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-
-      setToken(authToken);
-      setUser(userData);
+      setUser(response.data.user);
     } catch (err: any) {
-      console.error('Erro na autenticação real:', err);
+      console.error('Erro na autenticação:', err);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (err) {
+      console.error('Erro ao efetuar logout no servidor:', err);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
-        isAuthenticated: !!token && !!user,
+        isAuthenticated: !!user,
         loading,
         login,
         logout,
