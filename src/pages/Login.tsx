@@ -29,15 +29,17 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err: any) {
       console.error('Erro de autenticação:', err);
-      if (err?.response?.status === 429) {
+      if (!err.response) {
+        setErrorMessage('Não foi possível conectar ao servidor. Verifique sua conexão ou se a API está acessível.');
+      } else if (err.response.status === 429) {
         setErrorMessage(
           err.response.data?.error ||
           'Excesso de tentativas. Por favor, aguarde.'
         );
       } else {
         setErrorMessage(
-          err?.response?.data?.error ||
-          err?.response?.data?.message ||
+          err.response.data?.error ||
+          err.response.data?.message ||
           'E-mail ou senha incorretos.'
         );
       }
