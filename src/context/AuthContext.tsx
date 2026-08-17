@@ -16,7 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me usando o cookie HttpOnly
+  // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me
   useEffect(() => {
     const restoreSession = async () => {
       try {
@@ -25,7 +25,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(response.data.user);
         }
       } catch (err) {
-        // Sessão não ativa ou expirada no cookie HttpOnly
+        // Sessão não ativa ou expirada
+        sessionStorage.removeItem('sessionToken');
         setUser(null);
       } finally {
         setLoading(false);
@@ -37,11 +38,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string, _selectedRole: UserRole = 'SUPER_ADMIN') => {
     try {
-      // O backend validará a credencial, definirá o Cookie HttpOnly e retornará os dados do usuário
+      // O backend validará a credencial, definirá o Cookie HttpOnly e retornará o token e usuário
       const response = await api.post('/auth/login', { email, password });
 
       if (!response.data?.user) {
         throw new Error('Servidor não retornou os dados do usuário.');
+      }
+
+      if (response.data?.token) {
+        // Salva o token na sessão da aba para navegadores móveis com restrição ITP (Safari/iOS)
+        sessionStorage.setItem('sessionToken', response.data.token);
       }
 
       setUser(response.data.user);
@@ -57,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Erro ao efetuar logout no servidor:', err);
     } finally {
+      sessionStorage.removeItem('sessionToken');
       setUser(null);
     }
   };
