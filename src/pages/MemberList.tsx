@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Shield, ChevronRight } from 'lucide-react';
+import { ArrowLeft, UserCheck, Shield, ChevronRight, Briefcase, Users } from 'lucide-react';
 import { api } from '../services/api';
 
 interface Member {
@@ -8,6 +8,10 @@ interface Member {
     fullName: string;
     email: string;
     roles: string[];
+    connectionGroup?: {
+        id: string;
+        name: string;
+    } | null;
     memberProfile?: {
         baptismDate?: string;
         ministries: string[];
@@ -57,29 +61,58 @@ export default function MemberList() {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {members.map(member => (
-                            <div 
-                                key={member.id} 
-                                onClick={() => navigate(`/membros/${member.id}`)}
-                                className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer transition-all group"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl shadow-inner">
-                                            <UserCheck size={20} />
+                        {members.map(member => {
+                            const ministriesList = member.memberProfile?.ministries || [];
+                            const gcName = member.connectionGroup?.name;
+
+                            return (
+                                <div 
+                                    key={member.id} 
+                                    onClick={() => navigate(`/membros/${member.id}`)}
+                                    className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer transition-all group"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl shadow-inner">
+                                                <UserCheck size={20} />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
+                                                    {member.fullName}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                    <span className="flex items-center gap-1">
+                                                        <Shield size={10} className="text-blue-500" />
+                                                        {member.roles.join(', ')}
+                                                    </span>
+                                                    {gcName && (
+                                                        <span className="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <Users size={10} />
+                                                            GC {gcName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">{member.fullName}</h3>
-                                            <p className="text-xs text-slate-400 flex items-center gap-1">
-                                                <Shield size={10} className="text-blue-500" />
-                                                {member.roles.join(', ')}
-                                            </p>
-                                        </div>
+                                        <ChevronRight size={18} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
                                     </div>
-                                    <ChevronRight size={18} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+
+                                    {ministriesList.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/60">
+                                            <Briefcase size={12} className="text-cyan-400 shrink-0" />
+                                            {ministriesList.map((m, idx) => (
+                                                <span 
+                                                    key={idx}
+                                                    className="bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-medium px-2 py-0.5 rounded-md"
+                                                >
+                                                    {m}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </main>

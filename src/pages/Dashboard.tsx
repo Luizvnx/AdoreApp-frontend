@@ -1,11 +1,16 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck } from 'lucide-react';
+import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck, Briefcase, MapPin, Calendar } from 'lucide-react';
 import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const [visitorCount, setVisitorCount] = useState<number | null>(null);
+  const [memberCount, setMemberCount] = useState<number | null>(null);
 
   const currentUser: User = user || {
     id: '123',
@@ -21,6 +26,19 @@ export default function Dashboard() {
   // Lógica de RBAC (Role-Based Access Control)
   const canSeeVisitors = ['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_LEADER'].includes(currentUser.role);
   const canSeeMembers = ['SUPER_ADMIN', 'GC_LEADER', 'ADMIN_WELCOME'].includes(currentUser.role);
+
+  useEffect(() => {
+    if (canSeeVisitors) {
+      api.get('/visitors')
+        .then(res => setVisitorCount(res.data.length))
+        .catch(err => console.error('Erro ao buscar total de visitantes:', err));
+    }
+    if (canSeeMembers) {
+      api.get('/members')
+        .then(res => setMemberCount(res.data.length))
+        .catch(err => console.error('Erro ao buscar total de membros:', err));
+    }
+  }, [canSeeVisitors, canSeeMembers]);
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-24">
@@ -45,6 +63,7 @@ export default function Dashboard() {
       </header>
 
       <main className="p-4 sm:p-6 space-y-6 max-w-lg mx-auto w-full">
+        {/* Métricas Resumidas */}
         <section className="grid grid-cols-2 gap-3 sm:gap-4">
           {canSeeVisitors && (
             <div
@@ -55,7 +74,9 @@ export default function Dashboard() {
                 <span className="text-slate-400 text-xs mb-1">Novos Visitantes</span>
                 <ChevronRight size={14} className="text-slate-500 group-hover:text-cyan-400 transition-colors" />
               </div>
-              <span className="text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">24</span>
+              <span className="text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">
+                {visitorCount !== null ? visitorCount : '...'}
+              </span>
             </div>
           )}
           {canSeeMembers && (
@@ -67,7 +88,9 @@ export default function Dashboard() {
                 <span className="text-slate-400 text-xs mb-1">Membros em GCs</span>
                 <ChevronRight size={14} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
               </div>
-              <span className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">142</span>
+              <span className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                {memberCount !== null ? memberCount : '...'}
+              </span>
             </div>
           )}
           {!canSeeVisitors && !canSeeMembers && (
@@ -77,6 +100,74 @@ export default function Dashboard() {
             </div>
           )}
         </section>
+
+        {/* Card Informativo do GC do Membro Logado */}
+        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Users size={18} className="text-cyan-400" />
+              Seu Grupo de Conexão (GC)
+            </h3>
+            {currentUser.connectionGroup && (
+              <span className="bg-cyan-500/10 text-cyan-300 text-xs font-semibold px-2.5 py-1 rounded-lg border border-cyan-500/20">
+                GC {currentUser.connectionGroup.name}
+              </span>
+            )}
+          </div>
+
+          {currentUser.connectionGroup ? (
+            <div className="space-y-2 text-xs">
+              <h4 className="text-base font-bold text-cyan-400">
+                GC {currentUser.connectionGroup.name}
+              </h4>
+              <div className="flex flex-col gap-2 text-slate-300 pt-1">
+                {currentUser.connectionGroup.neighborhood && (
+                  <div className="flex items-center gap-2">
+                    <MapPin size={14} className="text-slate-400 shrink-0" />
+                    <span>Localização: <strong className="text-white">{currentUser.connectionGroup.neighborhood}</strong></span>
+                  </div>
+                )}
+                {(currentUser.connectionGroup.meetingDay || currentUser.connectionGroup.meetingTime) && (
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-slate-400 shrink-0" />
+                    <span>Encontro: <strong className="text-white">{currentUser.connectionGroup.meetingDay || ''} {currentUser.connectionGroup.meetingTime ? `às ${currentUser.connectionGroup.meetingTime}` : ''}</strong></span>
+                  </div>
+                )}
+                {currentUser.connectionGroup.leader?.fullName && (
+                  <div className="flex items-center gap-2">
+                    <UserCheck size={14} className="text-slate-400 shrink-0" />
+                    <span>Líder do GC: <strong className="text-white">{currentUser.connectionGroup.leader.fullName}</strong></span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-400 py-2">
+              Você ainda não possui um Grupo de Conexão (GC) vinculado ao seu perfil. Fale com a liderança da sua igreja para se conectar!
+            </div>
+          )}
+        </section>
+
+        {/* Card Informativo dos Cargos & Ministérios do Membro Logado */}
+        {currentUser.memberProfile?.ministries && currentUser.memberProfile.ministries.length > 0 && (
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-3">
+              <Briefcase size={18} className="text-blue-400" />
+              Seus Cargos & Ministérios
+            </h3>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {currentUser.memberProfile.ministries.map((m, idx) => (
+                <span
+                  key={idx}
+                  className="bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5"
+                >
+                  <Briefcase size={12} className="text-blue-400" />
+                  {m}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section>
           <h3 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
@@ -117,20 +208,52 @@ export default function Dashboard() {
             )}
 
             {canSeeMembers && (
-              <button
-                onClick={() => navigate('/membros')}
-                className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
-                    <UserCheck size={24} />
+              <>
+                <button
+                  onClick={() => navigate('/membros')}
+                  className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
+                      <UserCheck size={24} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-semibold text-white">Membros Oficiais</h4>
+                      <p className="text-xs text-slate-400">Gestão da membresia</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <h4 className="font-semibold text-white">Membros Oficiais</h4>
-                    <p className="text-xs text-slate-400">Gestão da membresia</p>
+                  <ChevronRight className="text-blue-500" size={20} />
+                </button>
+
+                <button
+                  onClick={() => navigate('/cargos')}
+                  className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
+                      <Briefcase size={24} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-semibold text-white">Cargos & Ministérios</h4>
+                      <p className="text-xs text-slate-400">Gerenciar cargos da igreja</p>
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="text-blue-500" size={20} />
-              </button>
+                  <ChevronRight className="text-cyan-500" size={20} />
+                </button>
+
+                <button
+                  onClick={() => navigate('/gcs')}
+                  className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
+                      <Users size={24} />
+                    </div>
+                    <div className="text-left">
+                      <h4 className="font-semibold text-white">Grupos de Conexão (GCs)</h4>
+                      <p className="text-xs text-slate-400">Gerenciar IDE, Reobote, Chosen, Rebecas...</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="text-blue-500" size={20} />
+                </button>
+              </>
             )}
 
             {currentUser.role === 'MEMBER' && (

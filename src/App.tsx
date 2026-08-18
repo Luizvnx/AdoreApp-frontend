@@ -9,6 +9,8 @@ import VisitorList from './pages/VisitorList';
 import MemberList from './pages/MemberList';
 import MemberProfile from './pages/MemberProfile';
 import UserProfile from './pages/UserProfile';
+import MinistryManagement from './pages/MinistryManagement';
+import GroupManagement from './pages/GroupManagement';
 
 const App: React.FC = () => {
     return (
@@ -32,6 +34,8 @@ const App: React.FC = () => {
                         <Route path="/membros" element={<MemberList />} />
                         <Route path="/membros/:id" element={<MemberProfile />} />
                         <Route path="/membros/:id/editar" element={<MemberProfile />} />
+                        <Route path="/cargos" element={<MinistryManagement />} />
+                        <Route path="/gcs" element={<GroupManagement />} />
                         <Route path="/perfil" element={<UserProfile />} />
                     </Route>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Music, Save, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users } from 'lucide-react';
 import { api } from '../services/api';
 
 interface Member {
@@ -8,6 +8,11 @@ interface Member {
     fullName: string;
     email: string;
     roles: string[];
+    connectionGroupId?: string | null;
+    connectionGroup?: {
+        id: string;
+        name: string;
+    };
     memberProfile?: {
         phone?: string;
         address?: string;
@@ -18,6 +23,16 @@ interface Member {
         baptismDate?: string;
         ministries: string[];
     };
+}
+
+interface MinistryItem {
+    id: string;
+    name: string;
+}
+
+interface GroupItem {
+    id: string;
+    name: string;
 }
 
 export default function MemberProfile() {
@@ -36,20 +51,47 @@ export default function MemberProfile() {
     const [birthDate, setBirthDate] = useState('');
     const [joinDate, setJoinDate] = useState('');
     const [baptismDate, setBaptismDate] = useState('');
-    const [ministries, setMinistries] = useState('');
+    
+    // Cargos / Ministérios
+    const [selectedMinistries, setSelectedMinistries] = useState<string[]>([]);
+    const [availableMinistries, setAvailableMinistries] = useState<MinistryItem[]>([]);
+
+    // Grupos de Conexão (GCs)
+    const [connectionGroupId, setConnectionGroupId] = useState<string>('');
+    const [availableGroups, setAvailableGroups] = useState<GroupItem[]>([]);
 
     useEffect(() => {
-        fetchMember();
+        fetchData();
     }, [id]);
 
-    const fetchMember = async () => {
+    const fetchData = async () => {
         try {
+            setLoading(true);
+            
+            // Buscar lista de cargos disponíveis
+            try {
+                const minRes = await api.get('/ministries');
+                setAvailableMinistries(minRes.data);
+            } catch (err) {
+                console.error('Erro ao buscar cargos:', err);
+            }
+
+            // Buscar lista de GCs disponíveis
+            try {
+                const groupRes = await api.get('/connection-groups');
+                setAvailableGroups(groupRes.data);
+            } catch (err) {
+                console.error('Erro ao buscar GCs:', err);
+            }
+
+            // Buscar dados do membro
             const response = await api.get('/members');
             const found = response.data.find((m: Member) => m.id === id);
             
             if (found) {
                 setMember(found);
                 setFullName(found.fullName);
+                setConnectionGroupId(found.connectionGroupId || found.connectionGroup?.id || '');
                 if (found.memberProfile) {
                     setPhone(found.memberProfile.phone || '');
                     setAddress(found.memberProfile.address || '');
@@ -58,7 +100,9 @@ export default function MemberProfile() {
                     if (found.memberProfile.birthDate) setBirthDate(new Date(found.memberProfile.birthDate).toISOString().split('T')[0]);
                     if (found.memberProfile.joinDate) setJoinDate(new Date(found.memberProfile.joinDate).toISOString().split('T')[0]);
                     if (found.memberProfile.baptismDate) setBaptismDate(new Date(found.memberProfile.baptismDate).toISOString().split('T')[0]);
-                    if (found.memberProfile.ministries) setMinistries(found.memberProfile.ministries.join(', '));
+                    if (found.memberProfile.ministries) {
+                        setSelectedMinistries(found.memberProfile.ministries);
+                    }
                 }
             } else {
                 alert('Membro não encontrado.');
@@ -72,12 +116,16 @@ export default function MemberProfile() {
         }
     };
 
+    const toggleMinistry = (name: string) => {
+        setSelectedMinistries(prev => 
+            prev.includes(name) ? prev.filter(m => m !== name) : [...prev, name]
+        );
+    };
+
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
         try {
-            const minArray = ministries.split(',').map(m => m.trim()).filter(m => m.length > 0);
-            
             await api.put(`/members/${id}`, {
                 fullName,
                 phone,
@@ -87,7 +135,8 @@ export default function MemberProfile() {
                 birthDate: birthDate ? new Date(birthDate).toISOString() : null,
                 joinDate: joinDate ? new Date(joinDate).toISOString() : null,
                 baptismDate: baptismDate ? new Date(baptismDate).toISOString() : null,
-                ministries: minArray
+                ministries: selectedMinistries,
+                connectionGroupId: connectionGroupId || null
             });
             
             alert('Perfil atualizado com sucesso!');
@@ -107,6 +156,14 @@ export default function MemberProfile() {
             </div>
         );
     }
+
+    // Combinar ministérios cadastrados na API com quaisquer valores personalizados legados
+    const allMinistryNames = Array.from(
+        new Set([
+            ...availableMinistries.map(m => m.name),
+            ...selectedMinistries
+        ])
+    ).sort((a, b) => a.localeCompare(b));
 
     return (
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
@@ -246,18 +303,92 @@ export default function MemberProfile() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-400 flex items-center gap-2">
-                                <Music size={14} className="text-slate-400" />
-                                Ministérios (separados por vírgula)
-                            </label>
-                            <input
-                                type="text"
-                                value={ministries}
-                                onChange={(e) => setMinistries(e.target.value)}
-                                placeholder="Louvor, Diaconia, Jovens..."
-                                className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
-                            />
+                        {/* Seleção do Grupo de Conexão (GC) */}
+                        <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                                    <Users size={14} className="text-cyan-400" />
+                                    Grupo de Conexão (GC)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/gcs')}
+                                    className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 hover:underline transition-all"
+                                >
+                                    <Plus size={12} />
+                                    Gerenciar GCs
+                                </button>
+                            </div>
+
+                            <select
+                                value={connectionGroupId}
+                                onChange={(e) => setConnectionGroupId(e.target.value)}
+                                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all cursor-pointer"
+                            >
+                                <option value="">Nenhum GC vinculado</option>
+                                {availableGroups.map((g) => (
+                                    <option key={g.id} value={g.id}>
+                                        GC {g.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Seleção de Cargos / Ministérios na Igreja */}
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                                    <Briefcase size={14} className="text-blue-400" />
+                                    Cargos & Ministérios na Igreja
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/cargos')}
+                                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 hover:underline transition-all"
+                                >
+                                    <Plus size={12} />
+                                    Gerenciar Cargos
+                                </button>
+                            </div>
+
+                            <p className="text-[11px] text-slate-500">
+                                Clique para selecionar ou desmarcar os cargos deste membro:
+                            </p>
+
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                {allMinistryNames.map((name) => {
+                                    const isSelected = selectedMinistries.includes(name);
+                                    return (
+                                        <button
+                                            key={name}
+                                            type="button"
+                                            onClick={() => toggleMinistry(name)}
+                                            className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-all active:scale-95 ${
+                                                isSelected
+                                                    ? 'bg-blue-500/20 text-blue-300 border-blue-500/60 shadow-[0_0_12px_rgba(59,130,246,0.2)]'
+                                                    : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                                            }`}
+                                        >
+                                            <div
+                                                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
+                                                    isSelected
+                                                        ? 'bg-blue-500 border-blue-400 text-white'
+                                                        : 'border-slate-700 bg-slate-900'
+                                                }`}
+                                            >
+                                                {isSelected && <Check size={10} strokeWidth={3} />}
+                                            </div>
+                                            {name}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {selectedMinistries.length > 0 && (
+                                <p className="text-[11px] text-slate-400 pt-1">
+                                    <span className="font-semibold text-blue-400">{selectedMinistries.length}</span> cargo(s) selecionado(s): {selectedMinistries.join(', ')}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -280,3 +411,4 @@ export default function MemberProfile() {
         </div>
     );
 }
+

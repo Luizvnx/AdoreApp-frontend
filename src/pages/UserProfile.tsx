@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut } from 'lucide-react';
+import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut, Users, Briefcase } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -196,6 +196,52 @@ export default function UserProfile() {
                             <label className="text-xs text-slate-400 uppercase tracking-wider">Endereço Completo</label>
                             <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="Rua, Número, Complemento" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white focus:border-cyan-500 outline-none transition-colors" />
                         </div>
+                    </section>
+
+                    {/* Grupo de Conexão e Cargos */}
+                    <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <h2 className="text-sm font-semibold text-slate-300 border-b border-slate-800 pb-2 flex items-center gap-2">
+                            <Users size={16} className="text-cyan-500" /> Seu Grupo de Conexão & Cargos
+                        </h2>
+
+                        {currentUser?.connectionGroup ? (
+                            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 space-y-2 text-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-sm text-cyan-400">GC {currentUser.connectionGroup.name}</span>
+                                    <span className="bg-cyan-500/10 text-cyan-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-cyan-500/20">Vinculado</span>
+                                </div>
+                                {currentUser.connectionGroup.neighborhood && (
+                                    <p className="text-slate-300 flex items-center gap-1.5">
+                                        <MapPin size={12} className="text-slate-500" />
+                                        Localização: <strong>{currentUser.connectionGroup.neighborhood}</strong>
+                                    </p>
+                                )}
+                                {(currentUser.connectionGroup.meetingDay || currentUser.connectionGroup.meetingTime) && (
+                                    <p className="text-slate-300 flex items-center gap-1.5">
+                                        <Calendar size={12} className="text-slate-500" />
+                                        Encontro: <strong>{currentUser.connectionGroup.meetingDay || ''} {currentUser.connectionGroup.meetingTime ? `às ${currentUser.connectionGroup.meetingTime}` : ''}</strong>
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-400 bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                                Você ainda não possui um Grupo de Conexão (GC) vinculado. Fale com a liderança para se conectar!
+                            </p>
+                        )}
+
+                        {currentUser?.memberProfile?.ministries && currentUser.memberProfile.ministries.length > 0 && (
+                            <div className="pt-2">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">Cargos em que Atua</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {currentUser.memberProfile.ministries.map((m, idx) => (
+                                        <span key={idx} className="bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-medium px-2.5 py-1 rounded-lg flex items-center gap-1">
+                                            <Briefcase size={12} className="text-blue-400" />
+                                            {m}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </section>
 
                     {/* Credenciais de Acesso */}
