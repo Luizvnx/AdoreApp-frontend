@@ -31,5 +31,22 @@ export const UI_MESSAGES = {
     REGISTER_ATTENDANCE: 'Erro ao registrar culto.',
     UPDATE_PROFILE: 'Erro ao atualizar perfil.',
     LOGIN_FAILED: 'Erro de autenticação.',
+  },
+  LABELS: {
+    NAV_GESTAO: 'Gestão',
+    NAV_HOME: 'Início',
+    NAV_VISITORS: 'Visitantes',
+    NAV_MEMBERS: 'Membros',
+    NAV_CHURCH: 'Igreja',
+    NAV_FINANCE: 'Tesouraria',
+    NAV_PROFILE: 'Perfil',
+    
+    // Hubs
+    HUB_VISITORS_TITLE: 'Gestão de Visitantes',
+    HUB_VISITORS_DESC: 'Escolha uma ação para visitantes.',
+    HUB_CHURCH_TITLE: 'Gestão da Igreja',
+    HUB_CHURCH_DESC: 'Administração de GCs, Cargos e Métricas.',
+    HUB_MENU_TITLE: 'Mais Opções',
+    HUB_MENU_DESC: 'Acesse outras ferramentas e configurações.',
   }
 };
