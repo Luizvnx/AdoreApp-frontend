@@ -13,6 +13,7 @@ import UserProfile from './pages/UserProfile';
 import MinistryManagement from './pages/MinistryManagement';
 import GroupManagement from './pages/GroupManagement';
 import ServiceMetrics from './pages/ServiceMetrics';
+import FinanceDashboard from './pages/FinanceDashboard';
 
 const App: React.FC = () => {
     return (
@@ -60,6 +61,11 @@ const App: React.FC = () => {
                         {/* Módulo de Grupos de Conexão (GCs) */}
                         <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
                             <Route path="/gcs" element={<GroupManagement />} />
+                        </Route>
+
+                        {/* Módulo Financeiro / Tesouraria */}
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE_ADMIN']} />}>
+                            <Route path="/financeiro" element={<FinanceDashboard />} />
                         </Route>
 
                         {/* Redirecionamento fallback */}

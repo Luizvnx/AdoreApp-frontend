@@ -1,0 +1,591 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, PlusCircle, Calendar as CalendarIcon, List, CalendarDays, RefreshCw, FileText, FileSpreadsheet, Edit2, History, Filter, Search } from 'lucide-react';
+import { exportFinanceToPDF, exportFinanceToExcel } from '../utils/reportUtils';
+import { useFinance, type Transaction } from '../hooks/useFinance';
+//import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+
+export default function FinanceDashboard() {
+  const navigate = useNavigate();
+  //const { user } = useAuth();
+  const { showError, showSuccess } = useToast();
+
+  const {
+    loading,
+    metrics,
+    recentTransactions,
+    fixedExpenses,
+    filteredTransactions,
+    loadingHistory,
+    fetchData,
+    fetchFilteredTransactions,
+    createTransaction,
+    updateTransaction,
+    createFixedExpense,
+    deleteFixedExpense
+  } = useFinance();
+
+  // Filtros do Histórico Completo
+  const [filterMonth, setFilterMonth] = useState(String(new Date().getMonth() + 1));
+  const [filterYear, setFilterYear] = useState(String(new Date().getFullYear()));
+  const [filterCategory, setFilterCategory] = useState('ALL');
+
+  React.useEffect(() => {
+    fetchFilteredTransactions(filterMonth, filterYear, filterCategory);
+  }, [filterMonth, filterYear, filterCategory]);
+
+  // Modals state
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [showFixedExpenseModal, setShowFixedExpenseModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [selectedHistoryTransaction, setSelectedHistoryTransaction] = useState<Transaction | null>(null);
+
+  const [transactionForm, setTransactionForm] = useState({
+    title: '',
+    type: 'INCOME',
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    category: 'DIZIMO_OFERTA',
+    notes: '',
+  });
+
+  const [fixedExpenseForm, setFixedExpenseForm] = useState({
+    title: '',
+    amount: '',
+    dueDate: '1',
+    notes: '',
+  });
+
+  const handleTransactionSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let success = false;
+
+    if (selectedTransactionId) {
+      success = await updateTransaction(selectedTransactionId, transactionForm);
+    } else {
+      success = await createTransaction(transactionForm);
+    }
+
+    if (success) {
+      setShowTransactionModal(false);
+      setSelectedTransactionId(null);
+      setTransactionForm({ ...transactionForm, title: '', amount: '', notes: '' });
+    }
+  };
+
+  const handleEditTransaction = (t: Transaction) => {
+    setSelectedTransactionId(t.id);
+    setTransactionForm({
+      title: t.title,
+      type: t.type,
+      amount: String(t.amount),
+      date: new Date(t.date).toISOString().split('T')[0],
+      category: t.category,
+      notes: t.notes || ''
+    });
+    setShowTransactionModal(true);
+  };
+
+  const handleViewHistory = (t: Transaction) => {
+    setSelectedHistoryTransaction(t);
+    setShowHistoryModal(true);
+  };
+
+  const handleFixedExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await createFixedExpense(fixedExpenseForm);
+    if (success) {
+      setShowFixedExpenseModal(false);
+      setFixedExpenseForm({ ...fixedExpenseForm, title: '', amount: '' });
+    }
+  };
+
+  const exportToPDF = async () => {
+    try {
+      const res = await api.get('/finance/transactions');
+      exportFinanceToPDF(res.data, metrics?.period || '');
+      showSuccess('PDF gerado com sucesso!');
+    } catch (error) {
+      showError('Erro ao gerar PDF.');
+    }
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const res = await api.get('/finance/transactions');
+      exportFinanceToExcel(res.data, metrics?.period || '');
+      showSuccess('Excel gerado com sucesso!');
+    } catch (error) {
+      showError('Erro ao gerar Excel.');
+    }
+  };
+
+  if (loading && !metrics) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white font-sans pb-24 relative overflow-x-hidden pt-safe pb-safe">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h1 className="text-lg font-bold text-white flex items-center gap-2">
+              <Wallet size={20} className="text-emerald-500" /> Tesouraria
+            </h1>
+            <p className="text-xs text-emerald-400">Visão Geral - {metrics?.period}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={exportToPDF} title="Exportar PDF" className="p-2 text-rose-400 hover:text-rose-300 hover:bg-slate-800 rounded-full transition-colors">
+            <FileText size={18} />
+          </button>
+          <button onClick={exportToExcel} title="Exportar Excel" className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-slate-800 rounded-full transition-colors">
+            <FileSpreadsheet size={18} />
+          </button>
+          <button onClick={fetchData} title="Atualizar Dados" className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full ml-1">
+            <RefreshCw size={16} />
+          </button>
+        </div>
+      </header>
+
+      <main className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
+
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-emerald-400 mb-2">
+              <TrendingUp size={16} />
+              <span className="text-xs font-semibold uppercase tracking-wider">Entradas (Mês)</span>
+            </div>
+            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.totalIncome || 0)}</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-red-400 mb-2">
+              <TrendingDown size={16} />
+              <span className="text-xs font-semibold uppercase tracking-wider">Saídas (Mês)</span>
+            </div>
+            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.totalExpense || 0)}</p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+            <div className="flex items-center gap-2 text-amber-400 mb-2">
+              <CalendarDays size={16} />
+              <span className="text-xs font-semibold uppercase tracking-wider">Gastos Fixos Proj.</span>
+            </div>
+            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.projectedFixedExpenses || 0)}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-600 to-emerald-900 border border-emerald-500/50 rounded-2xl p-4 flex flex-col justify-between shadow-lg shadow-emerald-500/20">
+            <div className="flex items-center gap-2 text-emerald-100 mb-2">
+              <DollarSign size={16} />
+              <span className="text-xs font-semibold uppercase tracking-wider">Saldo Geral Caixa</span>
+            </div>
+            <p className="text-2xl font-bold text-white">{formatCurrency(metrics?.currentBalance || 0)}</p>
+          </div>
+        </div>
+
+        {/* Ações Rápidas */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => { setTransactionForm({ ...transactionForm, type: 'INCOME' }); setShowTransactionModal(true); }}
+            className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
+          >
+            <TrendingUp size={24} />
+            <span className="text-sm font-semibold">Nova Entrada</span>
+          </button>
+
+          <button
+            onClick={() => { setTransactionForm({ ...transactionForm, type: 'EXPENSE' }); setShowTransactionModal(true); }}
+            className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
+          >
+            <TrendingDown size={24} />
+            <span className="text-sm font-semibold">Nova Saída</span>
+          </button>
+        </div>
+
+        {/* Histórico Recente e Gastos Fixos */}
+        <div className="grid md:grid-cols-2 gap-6">
+
+          {/* Lançamentos Recentes */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                <List size={16} className="text-emerald-500" /> Últimas Movimentações
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {recentTransactions.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4">Nenhuma movimentação registrada.</p>
+              ) : (
+                recentTransactions.map(t => (
+                  <div key={t.id} className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800/50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {t.type === 'INCOME' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-slate-200">{t.title}</p>
+                          {(t.editHistory && t.editHistory.length > 0) && (
+                            <button
+                              onClick={() => handleViewHistory(t)}
+                              className="text-[9px] font-bold uppercase bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-amber-500/30"
+                              title="Ver histórico de edições"
+                            >
+                              <History size={10} /> Editado
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500">{new Date(t.date).toLocaleDateString()} - {t.category.replace('_', ' ')}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className={`text-sm font-bold ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
+                      </span>
+                      <button
+                        onClick={() => handleEditTransaction(t)}
+                        className="text-slate-500 hover:text-cyan-400 transition-colors"
+                        title="Editar Lançamento"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Gastos Fixos Programados */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                <CalendarIcon size={16} className="text-amber-500" /> Gastos Fixos Programados
+              </h2>
+              <button onClick={() => setShowFixedExpenseModal(true)} className="text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1">
+                <PlusCircle size={14} /> Adicionar
+              </button>
+            </div>
+            <div className="space-y-3">
+              {fixedExpenses.length === 0 ? (
+                <p className="text-xs text-slate-500 text-center py-4">Nenhum gasto fixo cadastrado.</p>
+              ) : (
+                fixedExpenses.map(f => (
+                  <div key={f.id} className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800/50">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-200">{f.title}</p>
+                      <p className="text-[10px] text-amber-500/80">Vencimento dia {f.dueDate}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-bold text-amber-400">{formatCurrency(f.amount)}</span>
+                      <button onClick={() => deleteFixedExpense(f.id)} className="text-slate-600 hover:text-red-400">
+                        <ArrowLeft size={14} className="rotate-45" /> {/* Excluir fake icon */}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Nova Seção: Histórico Completo de Movimentações */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-800 gap-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <History size={20} className="text-cyan-400" /> Histórico Completo
+            </h2>
+            
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 transition-colors">
+                <Filter size={14} className="text-slate-500 mr-2" />
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="bg-transparent text-sm text-slate-300 outline-none w-32"
+                >
+                  <option value="ALL">Todas Categorias</option>
+                  <option value="DIZIMO_OFERTA">Dízimo ou Oferta</option>
+                  <option value="DOACAO">Doação</option>
+                  <option value="EVENTOS">Eventos</option>
+                  <option value="GASTO_FIXO">Gasto Fixo</option>
+                  <option value="GASTO_VARIAVEL">Gasto Variável</option>
+                  <option value="MANUTENCAO">Manutenção</option>
+                  <option value="OUTROS">Outros</option>
+                </select>
+              </div>
+              
+              <select
+                value={filterMonth}
+                onChange={(e) => setFilterMonth(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-cyan-500"
+              >
+                <option value="1">Janeiro</option>
+                <option value="2">Fevereiro</option>
+                <option value="3">Março</option>
+                <option value="4">Abril</option>
+                <option value="5">Maio</option>
+                <option value="6">Junho</option>
+                <option value="7">Julho</option>
+                <option value="8">Agosto</option>
+                <option value="9">Setembro</option>
+                <option value="10">Outubro</option>
+                <option value="11">Novembro</option>
+                <option value="12">Dezembro</option>
+              </select>
+
+              <select
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm text-slate-300 outline-none focus:border-cyan-500"
+              >
+                {[2024, 2025, 2026, 2027].map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+
+              <button 
+                onClick={() => fetchFilteredTransactions(filterMonth, filterYear, filterCategory)}
+                disabled={loadingHistory}
+                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 p-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
+                title="Buscar"
+              >
+                {loadingHistory ? <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div> : <Search size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-xs text-slate-500 uppercase tracking-wider">
+                  <th className="pb-3 font-semibold pl-2">Data</th>
+                  <th className="pb-3 font-semibold">Tipo</th>
+                  <th className="pb-3 font-semibold">Descrição</th>
+                  <th className="pb-3 font-semibold">Categoria</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold text-right pr-2">Valor</th>
+                  <th className="pb-3 font-semibold text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {filteredTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center text-sm text-slate-500 py-8">
+                      Nenhuma movimentação encontrada para estes filtros.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTransactions.map(t => (
+                    <tr key={t.id} className="hover:bg-slate-800/20 transition-colors group">
+                      <td className="py-4 pl-2 text-sm text-slate-300 whitespace-nowrap">
+                        {new Date(t.date).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="py-4 text-sm">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                          {t.type === 'INCOME' ? 'ENTRADA' : 'SAÍDA'}
+                        </span>
+                      </td>
+                      <td className="py-4 text-sm text-slate-200 font-medium">
+                        {t.title}
+                      </td>
+                      <td className="py-4 text-sm text-slate-400">
+                        {t.category.replace('_', ' ')}
+                      </td>
+                      <td className="py-4">
+                        {(t.editHistory && t.editHistory.length > 0) ? (
+                          <button
+                             onClick={() => handleViewHistory(t)}
+                             className="text-[10px] font-bold uppercase bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded flex items-center gap-1 hover:bg-amber-500/20 transition-colors"
+                             title="Ver histórico de edições"
+                           >
+                             <History size={10} /> Editado
+                           </button>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase text-slate-600 px-2 py-0.5">Original</span>
+                        )}
+                      </td>
+                      <td className={`py-4 text-sm font-bold text-right pr-2 whitespace-nowrap ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
+                      </td>
+                      <td className="py-4 text-center">
+                        <button
+                          onClick={() => handleEditTransaction(t)}
+                          className="text-slate-500 hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Editar Lançamento"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {/* Modal de Transação */}
+      {showTransactionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-white">
+                {selectedTransactionId
+                  ? 'Editar Lançamento'
+                  : (transactionForm.type === 'INCOME' ? 'Lançar Nova Entrada' : 'Lançar Nova Saída')
+                }
+              </h3>
+              <button onClick={() => {
+                setShowTransactionModal(false);
+                setSelectedTransactionId(null);
+                setTransactionForm({ ...transactionForm, title: '', amount: '' });
+              }} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <form onSubmit={handleTransactionSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="text-xs text-slate-400">Título / Descrição</label>
+                <input required type="text" value={transactionForm.title} onChange={e => setTransactionForm({ ...transactionForm, title: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-white focus:border-emerald-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-slate-400">Valor (R$)</label>
+                  <input required type="number" step="0.01" value={transactionForm.amount} onChange={e => setTransactionForm({ ...transactionForm, amount: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-white focus:border-emerald-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400">Data</label>
+                  <input required type="date" value={transactionForm.date} onChange={e => setTransactionForm({ ...transactionForm, date: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400">Categoria</label>
+                <select required value={transactionForm.category} onChange={e => setTransactionForm({ ...transactionForm, category: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none">
+                  {transactionForm.type === 'INCOME' ? (
+                    <>
+                      <option value="DIZIMO_OFERTA">Dízimo ou Oferta</option>
+                      <option value="DOACAO">Doação</option>
+                      <option value="EVENTOS">Eventos</option>
+                      <option value="OUTROS">Outros</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="GASTO_FIXO">Gasto Fixo (Água, Luz, Aluguel)</option>
+                      <option value="GASTO_VARIAVEL">Gasto Variável</option>
+                      <option value="MANUTENCAO">Manutenção / Equipamentos</option>
+                      <option value="EVENTOS">Eventos</option>
+                      <option value="OUTROS">Outros</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <button type="submit" className={`w-full font-bold py-3 rounded-xl mt-2 transition-colors ${transactionForm.type === 'INCOME' ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'}`}>
+                Salvar Lançamento
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gasto Fixo */}
+      {showFixedExpenseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+              <h3 className="font-bold text-lg text-white">Cadastrar Gasto Fixo</h3>
+              <button onClick={() => setShowFixedExpenseModal(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <form onSubmit={handleFixedExpenseSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="text-xs text-slate-400">Nome da Despesa (Ex: Conta de Luz)</label>
+                <input required type="text" value={fixedExpenseForm.title} onChange={e => setFixedExpenseForm({ ...fixedExpenseForm, title: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-white focus:border-amber-500 outline-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-slate-400">Valor Médio (R$)</label>
+                  <input required type="number" step="0.01" value={fixedExpenseForm.amount} onChange={e => setFixedExpenseForm({ ...fixedExpenseForm, amount: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-white focus:border-amber-500 outline-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400">Dia de Vencimento (1 a 31)</label>
+                  <input required type="number" min="1" max="31" value={fixedExpenseForm.dueDate} onChange={e => setFixedExpenseForm({ ...fixedExpenseForm, dueDate: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-amber-500 outline-none" />
+                </div>
+              </div>
+              <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 font-bold py-3 rounded-xl mt-2 text-white shadow-lg shadow-amber-500/20 transition-colors">
+                Salvar Gasto Fixo
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal de Histórico (Diff) */}
+      {showHistoryModal && selectedHistoryTransaction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+              <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                <History size={18} className="text-amber-500" /> Histórico de Edições
+              </h3>
+              <button onClick={() => setShowHistoryModal(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-6">
+              <div className="mb-4">
+                <p className="text-sm font-bold text-white">{selectedHistoryTransaction.title}</p>
+                <p className="text-xs text-slate-400">Criado por {selectedHistoryTransaction.createdBy?.fullName || 'Desconhecido'}</p>
+              </div>
+
+              {selectedHistoryTransaction.editHistory?.map((history: any, index: number) => (
+                <div key={index} className="border border-slate-800 rounded-xl overflow-hidden">
+                  <div className="bg-slate-800/50 p-3 flex justify-between items-center border-b border-slate-800">
+                    <span className="text-xs text-amber-400 font-bold">Edição #{index + 1}</span>
+                    <span className="text-[10px] text-slate-400">{new Date(history.editedAt).toLocaleString('pt-BR')}</span>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    {Object.entries(history.changes).map(([field, diff]: [string, any]) => (
+                      <div key={field} className="text-sm font-mono bg-slate-950 p-3 rounded-lg border border-slate-800/50">
+                        <p className="text-xs font-sans text-slate-500 mb-2 uppercase tracking-wider">{field}</p>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center text-red-400 bg-red-950/30 px-2 py-1 rounded">
+                            <span className="w-4">-</span>
+                            <span className="line-through opacity-80">{String(diff.old)}</span>
+                          </div>
+                          <div className="flex items-center text-emerald-400 bg-emerald-950/30 px-2 py-1 rounded">
+                            <span className="w-4">+</span>
+                            <span>{String(diff.new)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-slate-800 flex justify-end">
+              <button onClick={() => setShowHistoryModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-colors">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

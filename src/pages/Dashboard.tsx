@@ -41,6 +41,7 @@ export default function Dashboard() {
   const canManageCargos = hasAnyRole(['WORSHIP_LEADER']);
   const canManageGCs = hasAnyRole(['GC_SUPERVISOR', 'GC_LEADER']);
   const canSeeMetrics = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER']);
+  const canSeeFinance = hasAnyRole(['FINANCE_ADMIN']);
 
   const { showError } = useToast();
 
@@ -196,6 +197,23 @@ export default function Dashboard() {
           <h3 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
 
           <div className="space-y-3">
+            {canSeeFinance && (
+              <button
+                onClick={() => navigate('/financeiro')}
+                className="w-full bg-slate-900 border border-emerald-500/20 hover:bg-slate-800 rounded-2xl p-4 flex items-center justify-between transition-colors group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                    <BarChart3 size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Tesouraria e ERP</h4>
+                    <p className="text-xs text-slate-400">Arrecadação e gestão financeira</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
+              </button>
+            )}
             {canSeeMetrics && (
               <button
                 onClick={() => navigate('/metricas')}

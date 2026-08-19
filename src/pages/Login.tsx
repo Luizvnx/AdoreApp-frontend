@@ -123,6 +123,7 @@ export default function Login() {
                 className="w-full bg-slate-950/80 border border-slate-800 hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="SUPER_ADMIN" className="bg-slate-900">SUPER_ADMIN (Pastor/Diretoria)</option>
+                <option value="FINANCE_ADMIN" className="bg-slate-900">FINANCE_ADMIN (Tesoureiro)</option>
                 <option value="ADMIN_WELCOME" className="bg-slate-900">ADMIN_WELCOME (Acolhimento)</option>
                 <option value="GC_SUPERVISOR" className="bg-slate-900">GC_SUPERVISOR (Supervisor de GC)</option>
                 <option value="GC_LEADER" className="bg-slate-900">GC_LEADER (Líder de GC)</option>

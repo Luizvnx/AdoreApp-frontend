@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -13,52 +13,8 @@ import {
   Clock,
   Check
 } from 'lucide-react';
-import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { UI_MESSAGES } from '../constants/messages';
-import { getApiErrorMessage } from '../utils/messageHandler';
-
-interface SummaryData {
-  totalVisitors: number;
-  visitorsThisMonth: number;
-  totalServicesRegistered: number;
-  overallAvgAttendance: number;
-}
-
-interface MonthMetric {
-  label: string;
-  monthIndex: number;
-  count: number;
-}
-
-interface WeekDayMetric {
-  day: string;
-  dayIndex: number;
-  count: number;
-}
-
-interface YearMetric {
-  year: number;
-  count: number;
-}
-
-interface ServiceStat {
-  serviceName: string;
-  totalServices: number;
-  totalPeople: number;
-  avgPeople: number;
-}
-
-interface ServiceRecord {
-  id: string;
-  date: string;
-  serviceName: string;
-  attendanceCount: number;
-  notes?: string | null;
-  createdBy?: {
-    fullName: string;
-  } | null;
-}
+import { useServiceMetrics } from '../hooks/useServiceMetrics';
 
 const PRESET_SERVICES = [
   'Culto de Domingo - Manhã',
@@ -73,25 +29,22 @@ const PRESET_SERVICES = [
 
 export default function ServiceMetrics() {
   const navigate = useNavigate();
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const [activeTab, setActiveTab] = useState<'metrics' | 'register'>('metrics');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Estados de Dados da API
-  const [summary, setSummary] = useState<SummaryData>({
-    totalVisitors: 0,
-    visitorsThisMonth: 0,
-    totalServicesRegistered: 0,
-    overallAvgAttendance: 0
-  });
-
-  const [visitorsByMonth, setVisitorsByMonth] = useState<MonthMetric[]>([]);
-  const [visitorsByDayOfWeek, setVisitorsByDayOfWeek] = useState<WeekDayMetric[]>([]);
-  const [visitorsByYear, setVisitorsByYear] = useState<YearMetric[]>([]);
-  const [serviceStats, setServiceStats] = useState<ServiceStat[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<ServiceRecord[]>([]);
+  const {
+    loading,
+    saving,
+    deletingId,
+    summary,
+    visitorsByMonth,
+    visitorsByDayOfWeek,
+    visitorsByYear,
+    serviceStats,
+    attendanceRecords,
+    createAttendance,
+    deleteAttendance
+  } = useServiceMetrics();
 
   // Formulário de Lançamento
   const [serviceName, setServiceName] = useState('');
@@ -101,36 +54,6 @@ export default function ServiceMetrics() {
     new Date().toISOString().split('T')[0]
   );
   const [notes, setNotes] = useState('');
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [metricsRes, attendanceRes] = await Promise.all([
-        api.get('/attendance/metrics'),
-        api.get('/attendance')
-      ]);
-
-      if (metricsRes.data) {
-        setSummary(metricsRes.data.summary || {});
-        setVisitorsByMonth(metricsRes.data.visitorsByMonth || []);
-        setVisitorsByDayOfWeek(metricsRes.data.visitorsByDayOfWeek || []);
-        setVisitorsByYear(metricsRes.data.visitorsByYear || []);
-        setServiceStats(metricsRes.data.serviceStats || []);
-      }
-
-      if (attendanceRes.data) {
-        setAttendanceRecords(attendanceRes.data || []);
-      }
-    } catch (err) {
-      showError(UI_MESSAGES.ERRORS.LOAD_METRICS);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateAttendance = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,44 +69,23 @@ export default function ServiceMetrics() {
       return;
     }
 
-    try {
-      setSaving(true);
+    const success = await createAttendance({
+      serviceName: selectedName.trim(),
+      attendanceCount: Number(attendanceCount),
+      serviceDate,
+      notes: notes.trim()
+    });
 
-      await api.post('/attendance', {
-        date: serviceDate,
-        serviceName: selectedName.trim(),
-        attendanceCount: Number(attendanceCount),
-        notes: notes.trim()
-      });
-
-      showSuccess(UI_MESSAGES.SUCCESS.ATTENDANCE_REGISTERED);
+    if (success) {
       setServiceName('');
       setCustomServiceName('');
       setAttendanceCount('');
       setNotes('');
-
-      // Recarrega os dados e alterna para a aba de histórico/gráficos se desejar
-      await fetchData();
-    } catch (err: any) {
-      showError(getApiErrorMessage(err, UI_MESSAGES.ERRORS.REGISTER_ATTENDANCE));
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDeleteAttendance = async (id: string) => {
-    if (!window.confirm('Deseja realmente excluir este registro de culto?')) return;
-    try {
-      setDeletingId(id);
-      await api.delete(`/attendance/${id}`);
-      setAttendanceRecords(prev => prev.filter(item => item.id !== id));
-      showSuccess(UI_MESSAGES.SUCCESS.ATTENDANCE_DELETED);
-      await fetchData();
-    } catch (err) {
-      showError(UI_MESSAGES.ERRORS.DELETE_ATTENDANCE);
-    } finally {
-      setDeletingId(null);
-    }
+    await deleteAttendance(id);
   };
 
   // Cálculos de max de cada gráfico para porcentagem de barras
@@ -225,11 +127,10 @@ export default function ServiceMetrics() {
         <div className="mt-4 flex bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/90 gap-1.5">
           <button
             onClick={() => setActiveTab('metrics')}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${
-              activeTab === 'metrics'
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${activeTab === 'metrics'
                 ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
                 : 'text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             <TrendingUp size={16} />
             <span>Painel de Gráficos</span>
@@ -237,11 +138,10 @@ export default function ServiceMetrics() {
 
           <button
             onClick={() => setActiveTab('register')}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${
-              activeTab === 'register'
+            className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${activeTab === 'register'
                 ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
                 : 'text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             <Plus size={16} />
             <span>Lançar Culto</span>
@@ -385,11 +285,10 @@ export default function ServiceMetrics() {
                       </span>
                       <div className="w-full max-w-[28px] bg-slate-950 rounded-t-lg h-full flex items-end p-0.5 border border-slate-800">
                         <div
-                          className={`w-full rounded-t-md transition-all duration-700 ${
-                            item.count > 0
+                          className={`w-full rounded-t-md transition-all duration-700 ${item.count > 0
                               ? 'bg-gradient-to-t from-cyan-600 to-cyan-400'
                               : 'bg-slate-800/30'
-                          }`}
+                            }`}
                           style={{ height: `${Math.max(heightPercent, 4)}%` }}
                         />
                       </div>
