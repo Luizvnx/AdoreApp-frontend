@@ -23,9 +23,20 @@ export default function Dashboard() {
     navigate('/');
   };
 
-  // Lógica de RBAC (Role-Based Access Control)
-  const canSeeVisitors = ['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_LEADER'].includes(currentUser.role);
-  const canSeeMembers = ['SUPER_ADMIN', 'GC_LEADER', 'ADMIN_WELCOME'].includes(currentUser.role);
+  // Helper de RBAC (Role-Based Access Control)
+  const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role];
+  const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
+
+  const hasAnyRole = (roles: string[]) => {
+    if (isSuperAdmin) return true;
+    return userRoles.some(r => roles.includes(r));
+  };
+
+  const canSeeVisitors = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR']);
+  const canRegisterVisitors = hasAnyRole(['ADMIN_WELCOME']);
+  const canSeeMembers = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR']);
+  const canManageCargos = hasAnyRole(['WORSHIP_LEADER']);
+  const canManageGCs = hasAnyRole(['GC_SUPERVISOR', 'GC_LEADER']);
 
   useEffect(() => {
     if (canSeeVisitors) {
@@ -173,105 +184,105 @@ export default function Dashboard() {
           <h3 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
 
           <div className="space-y-3">
-            {canSeeVisitors && (
-              <>
-                <button
-                  onClick={() => navigate('/cadastro/visitantes')}
-                  className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
-                      <UserPlus size={24} />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-white">Cadastrar Visitante</h4>
-                      <p className="text-xs text-slate-400">Adicionar novo no acolhimento</p>
-                    </div>
+            {canRegisterVisitors && (
+              <button
+                onClick={() => navigate('/cadastro/visitantes')}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
+                    <UserPlus size={24} />
                   </div>
-                  <ChevronRight className="text-cyan-500" size={20} />
-                </button>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Cadastrar Visitante</h4>
+                    <p className="text-xs text-slate-400">Adicionar novo no acolhimento</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-cyan-500" size={20} />
+              </button>
+            )}
 
-                <button
-                  onClick={() => navigate('/visitantes')}
-                  className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
-                      <Users size={24} />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-white">Lista de Visitantes</h4>
-                      <p className="text-xs text-slate-400">Ver e gerenciar cadastrados</p>
-                    </div>
+            {canSeeVisitors && (
+              <button
+                onClick={() => navigate('/visitantes')}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
+                    <Users size={24} />
                   </div>
-                  <ChevronRight className="text-cyan-500" size={20} />
-                </button>
-              </>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Lista de Visitantes</h4>
+                    <p className="text-xs text-slate-400">Ver e gerenciar cadastrados</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-cyan-500" size={20} />
+              </button>
             )}
 
             {canSeeMembers && (
-              <>
-                <button
-                  onClick={() => navigate('/membros')}
-                  className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
-                      <UserCheck size={24} />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-white">Membros Oficiais</h4>
-                      <p className="text-xs text-slate-400">Gestão da membresia</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="text-blue-500" size={20} />
-                </button>
-
-                <button
-                  onClick={() => navigate('/cargos')}
-                  className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
-                      <Briefcase size={24} />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-white">Cargos & Ministérios</h4>
-                      <p className="text-xs text-slate-400">Gerenciar cargos da igreja</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="text-cyan-500" size={20} />
-                </button>
-
-                <button
-                  onClick={() => navigate('/gcs')}
-                  className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
-                      <Users size={24} />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-white">Grupos de Conexão (GCs)</h4>
-                      <p className="text-xs text-slate-400">Gerenciar IDE, Reobote, Chosen, Rebecas...</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="text-blue-500" size={20} />
-                </button>
-              </>
-            )}
-
-            {currentUser.role === 'MEMBER' && (
               <button
-                onClick={() => navigate(`/membros/${currentUser.id}`)}
+                onClick={() => navigate('/membros')}
                 className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
                 <div className="flex items-center gap-4">
                   <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
                     <UserCheck size={24} />
                   </div>
                   <div className="text-left">
-                    <h4 className="font-semibold text-white">Meu Perfil</h4>
-                    <p className="text-xs text-slate-400">Ver e atualizar meus dados</p>
+                    <h4 className="font-semibold text-white">Membros Oficiais</h4>
+                    <p className="text-xs text-slate-400">Gestão da membresia</p>
                   </div>
                 </div>
                 <ChevronRight className="text-blue-500" size={20} />
               </button>
             )}
+
+            {canManageCargos && (
+              <button
+                onClick={() => navigate('/cargos')}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-cyan-500/10 to-transparent border border-cyan-500/20 hover:border-cyan-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-lg">
+                    <Briefcase size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Cargos & Ministérios</h4>
+                    <p className="text-xs text-slate-400">Gerenciar cargos da igreja</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-cyan-500" size={20} />
+              </button>
+            )}
+
+            {canManageGCs && (
+              <button
+                onClick={() => navigate('/gcs')}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent border border-blue-500/20 hover:border-blue-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-500/20 text-blue-400 p-2 rounded-lg">
+                    <Users size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Grupos de Conexão (GCs)</h4>
+                    <p className="text-xs text-slate-400">Gerenciar IDE, Reobote, Chosen, Rebecas...</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-blue-500" size={20} />
+              </button>
+            )}
+
+            <button
+              onClick={() => navigate('/perfil')}
+              className="w-full flex items-center justify-between bg-gradient-to-r from-slate-800/40 to-transparent border border-slate-800 hover:border-slate-700 p-4 rounded-2xl transition-all">
+              <div className="flex items-center gap-4">
+                <div className="bg-slate-800 text-slate-300 p-2 rounded-lg">
+                  <UserCheck size={24} />
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold text-white">Meu Perfil</h4>
+                  <p className="text-xs text-slate-400">Ver e atualizar meus dados</p>
+                </div>
+              </div>
+              <ChevronRight className="text-slate-500" size={20} />
+            </button>
           </div>
         </section>
       </main>
@@ -283,21 +294,21 @@ export default function Dashboard() {
           <Home size={20} />
           <span className="text-[10px] font-medium">Início</span>
         </button>
+        {canRegisterVisitors && (
+          <button
+            onClick={() => navigate('/cadastro/visitantes')}
+            className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
+            <UserPlus size={20} />
+            <span className="text-[10px] font-medium">Cadastrar</span>
+          </button>
+        )}
         {canSeeVisitors && (
-          <>
-            <button
-              onClick={() => navigate('/cadastro/visitantes')}
-              className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
-              <UserPlus size={20} />
-              <span className="text-[10px] font-medium">Cadastrar</span>
-            </button>
-            <button
-              onClick={() => navigate('/visitantes')}
-              className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
-              <Users size={20} />
-              <span className="text-[10px] font-medium">Visitantes</span>
-            </button>
-          </>
+          <button
+            onClick={() => navigate('/visitantes')}
+            className="flex flex-col items-center gap-1 text-slate-400 hover:text-cyan-400 transition-colors">
+            <Users size={20} />
+            <span className="text-[10px] font-medium">Visitantes</span>
+          </button>
         )}
         {canSeeMembers && (
           <button

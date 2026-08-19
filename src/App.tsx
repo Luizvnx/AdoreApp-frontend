@@ -26,17 +26,32 @@ const App: React.FC = () => {
                         }
                     />
 
-                    {/* Rotas protegidas (exigem login e token ativo) */}
+                    {/* Rotas protegidas gerais */}
                     <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/perfil" element={<UserProfile />} />
+                    </Route>
+
+                    {/* Módulo de Visitantes */}
+                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME']} />}>
                         <Route path="/cadastro/visitantes" element={<VisitorRegistration />} />
+                    </Route>
+
+                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
                         <Route path="/visitantes" element={<VisitorList />} />
                         <Route path="/membros" element={<MemberList />} />
                         <Route path="/membros/:id" element={<MemberProfile />} />
                         <Route path="/membros/:id/editar" element={<MemberProfile />} />
+                    </Route>
+
+                    {/* Módulo de Cargos & Ministérios */}
+                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'WORSHIP_LEADER']} />}>
                         <Route path="/cargos" element={<MinistryManagement />} />
+                    </Route>
+
+                    {/* Módulo de Grupos de Conexão (GCs) */}
+                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
                         <Route path="/gcs" element={<GroupManagement />} />
-                        <Route path="/perfil" element={<UserProfile />} />
                     </Route>
 
                     {/* Redirecionamento fallback */}

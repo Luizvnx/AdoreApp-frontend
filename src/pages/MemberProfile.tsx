@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import type { UserRole } from '../types';
 
 interface Member {
     id: string;
@@ -35,12 +37,25 @@ interface GroupItem {
     name: string;
 }
 
+const ALL_SYSTEM_ROLES: { role: UserRole; label: string; description: string }[] = [
+    { role: 'SUPER_ADMIN', label: 'SUPER ADMIN (Pastor / Diretoria)', description: 'Acesso total a todas as telas, métricas e gestão.' },
+    { role: 'ADMIN_WELCOME', label: 'ADMIN WELCOME (Acolhimento)', description: 'Gestão de visitantes e conversão para membros.' },
+    { role: 'GC_SUPERVISOR', label: 'GC SUPERVISOR (Supervisor de GCs)', description: 'Gestão de múltiplos Grupos de Conexão.' },
+    { role: 'GC_LEADER', label: 'GC LEADER (Líder de GC)', description: 'Gestão de membros e visitantes do seu GC.' },
+    { role: 'WORSHIP_LEADER', label: 'WORSHIP LEADER (Líder de Louvor)', description: 'Gestão de cargos, equipes e ministérios.' },
+    { role: 'MEMBER', label: 'MEMBER (Membro Comum)', description: 'Acesso restrito ao próprio perfil e dados do seu GC.' },
+];
+
 export default function MemberProfile() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user: currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [member, setMember] = useState<Member | null>(null);
+
+    // Roles de Acesso ao Sistema
+    const [selectedRoles, setSelectedRoles] = useState<string[]>(['MEMBER']);
 
     // Formulário
     const [fullName, setFullName] = useState('');
@@ -59,6 +74,8 @@ export default function MemberProfile() {
     // Grupos de Conexão (GCs)
     const [connectionGroupId, setConnectionGroupId] = useState<string>('');
     const [availableGroups, setAvailableGroups] = useState<GroupItem[]>([]);
+
+    const isSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN') || currentUser?.role === 'SUPER_ADMIN';
 
     useEffect(() => {
         fetchData();
@@ -91,6 +108,7 @@ export default function MemberProfile() {
             if (found) {
                 setMember(found);
                 setFullName(found.fullName);
+                setSelectedRoles(found.roles && found.roles.length > 0 ? found.roles : ['MEMBER']);
                 setConnectionGroupId(found.connectionGroupId || found.connectionGroup?.id || '');
                 if (found.memberProfile) {
                     setPhone(found.memberProfile.phone || '');
@@ -116,6 +134,16 @@ export default function MemberProfile() {
         }
     };
 
+    const toggleSystemRole = (role: string) => {
+        setSelectedRoles(prev => {
+            if (prev.includes(role)) {
+                if (prev.length === 1) return prev; // Mantém pelo menos um papel
+                return prev.filter(r => r !== role);
+            }
+            return [...prev, role];
+        });
+    };
+
     const toggleMinistry = (name: string) => {
         setSelectedMinistries(prev => 
             prev.includes(name) ? prev.filter(m => m !== name) : [...prev, name]
@@ -136,7 +164,8 @@ export default function MemberProfile() {
                 joinDate: joinDate ? new Date(joinDate).toISOString() : null,
                 baptismDate: baptismDate ? new Date(baptismDate).toISOString() : null,
                 ministries: selectedMinistries,
-                connectionGroupId: connectionGroupId || null
+                connectionGroupId: connectionGroupId || null,
+                roles: selectedRoles
             });
             
             alert('Perfil atualizado com sucesso!');
@@ -179,6 +208,47 @@ export default function MemberProfile() {
 
             <main className="p-4 sm:p-6 max-w-lg mx-auto w-full">
                 <form onSubmit={handleSave} className="space-y-6">
+                    {/* Seção de Permissões / Perfis de Acesso ao Sistema (Exclusivo SUPER_ADMIN) */}
+                    {isSuperAdmin && (
+                        <div className="bg-slate-900/80 border border-cyan-500/30 rounded-2xl p-5 space-y-4 shadow-xl shadow-cyan-500/5">
+                            <h3 className="text-sm font-semibold text-cyan-400 flex items-center gap-2 border-b border-slate-800 pb-3">
+                                <Shield size={16} className="text-cyan-400" />
+                                Perfis de Acesso ao Sistema (Permissões RBAC)
+                            </h3>
+
+                            <p className="text-xs text-slate-400">
+                                Como Administrador, selecione os papéis de acesso que este usuário possui no aplicativo:
+                            </p>
+
+                            <div className="space-y-2.5 pt-1">
+                                {ALL_SYSTEM_ROLES.map(({ role, label, description }) => {
+                                    const isSelected = selectedRoles.includes(role);
+                                    return (
+                                        <div
+                                            key={role}
+                                            onClick={() => toggleSystemRole(role)}
+                                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
+                                                isSelected
+                                                    ? 'bg-cyan-500/10 border-cyan-500/50 text-white'
+                                                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
+                                            }`}
+                                        >
+                                            <div className={`w-4 h-4 rounded-md mt-0.5 flex items-center justify-center border transition-all ${
+                                                isSelected ? 'bg-cyan-500 border-cyan-400 text-slate-950 font-bold' : 'border-slate-700 bg-slate-900'
+                                            }`}>
+                                                {isSelected && <Check size={12} strokeWidth={3} />}
+                                            </div>
+                                            <div>
+                                                <h4 className="text-xs font-bold text-slate-200">{label}</h4>
+                                                <p className="text-[11px] text-slate-400 mt-0.5">{description}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Dados Pessoais */}
                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
                         <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2 border-b border-slate-800/80 pb-3">

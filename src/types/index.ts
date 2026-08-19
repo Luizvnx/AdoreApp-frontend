@@ -1,4 +1,10 @@
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN_WELCOME' | 'MEMBER';
+export type UserRole = 
+  | 'SUPER_ADMIN' 
+  | 'ADMIN_WELCOME' 
+  | 'GC_SUPERVISOR' 
+  | 'GC_LEADER' 
+  | 'WORSHIP_LEADER' 
+  | 'MEMBER';
 
 export interface ConnectionGroupInfo {
     id: string;

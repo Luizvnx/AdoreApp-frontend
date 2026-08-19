@@ -66,7 +66,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
-            AdorehApp
+            AvivaApp
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             Gestão Integrada para a sua Igreja
@@ -146,6 +146,9 @@ export default function Login() {
               >
                 <option value="SUPER_ADMIN" className="bg-slate-900">SUPER_ADMIN (Pastor/Diretoria)</option>
                 <option value="ADMIN_WELCOME" className="bg-slate-900">ADMIN_WELCOME (Acolhimento)</option>
+                <option value="GC_SUPERVISOR" className="bg-slate-900">GC_SUPERVISOR (Supervisor de GC)</option>
+                <option value="GC_LEADER" className="bg-slate-900">GC_LEADER (Líder de GC)</option>
+                <option value="WORSHIP_LEADER" className="bg-slate-900">WORSHIP_LEADER (Líder de Louvor)</option>
                 <option value="MEMBER" className="bg-slate-900">MEMBER (Membro Comum)</option>
               </select>
               <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 pointer-events-none">
@@ -175,7 +178,7 @@ export default function Login() {
 
         {/* Footer info */}
         <div className="text-center mt-8 text-xs text-slate-500 border-t border-slate-800/80 pt-6">
-          <span>AdorehApp &copy; 2026</span>
+          <span>AvivaApp &copy; 2026</span>
         </div>
       </div>
     </div>

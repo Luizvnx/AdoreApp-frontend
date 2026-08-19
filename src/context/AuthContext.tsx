@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
-import type { User, UserRole } from '../types';
+import type { User } from '../types';
 
 interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string, role?: UserRole) => Promise<void>;
+  login: (email: string, password: string, overrideRole?: UserRole) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -22,11 +22,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const response = await api.get('/auth/me');
         if (response.data?.user) {
-          setUser(response.data.user);
+          const savedOverrideRole = sessionStorage.getItem('overrideRole') as UserRole | null;
+          if (savedOverrideRole) {
+            setUser({
+              ...response.data.user,
+              role: savedOverrideRole,
+              roles: [savedOverrideRole]
+            });
+          } else {
+            setUser(response.data.user);
+          }
         }
       } catch (err) {
         // Sessão não ativa ou expirada
         sessionStorage.removeItem('sessionToken');
+        sessionStorage.removeItem('overrideRole');
         setUser(null);
       } finally {
         setLoading(false);
@@ -36,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     restoreSession();
   }, []);
 
-  const login = async (email: string, password: string, _selectedRole: UserRole = 'SUPER_ADMIN') => {
+  const login = async (email: string, password: string, overrideRole?: UserRole) => {
     try {
       // O backend validará a credencial, definirá o Cookie HttpOnly e retornará o token e usuário
       const response = await api.post('/auth/login', { email, password });
@@ -50,7 +60,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionStorage.setItem('sessionToken', response.data.token);
       }
 
-      setUser(response.data.user);
+      let userObj = response.data.user;
+      if (overrideRole) {
+        sessionStorage.setItem('overrideRole', overrideRole);
+        userObj = {
+          ...userObj,
+          role: overrideRole,
+          roles: [overrideRole]
+        };
+      } else {
+        sessionStorage.removeItem('overrideRole');
+      }
+
+      setUser(userObj);
     } catch (err: any) {
       console.error('Erro na autenticação:', err);
       throw err;
@@ -64,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Erro ao efetuar logout no servidor:', err);
     } finally {
       sessionStorage.removeItem('sessionToken');
+      sessionStorage.removeItem('overrideRole');
       setUser(null);
     }
   };
