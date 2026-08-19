@@ -30,12 +30,23 @@ export default function UserProfile() {
 
         const fetchProfile = async () => {
             try {
-                setFormData(prev => ({
-                    ...prev,
-                    fullName: currentUser.name || '',
-                    email: currentUser.email || 'usuario@exemplo.com',
-                    phone: '(79) 90000-0000',
-                }));
+                setFetching(true);
+                const response = await api.get('/auth/me');
+                const userData = response.data?.user;
+                if (userData) {
+                    const prof = userData.memberProfile || {};
+                    setFormData({
+                        fullName: userData.name || '',
+                        email: userData.email || '',
+                        phone: prof.phone || '',
+                        password: '',
+                        birthDate: prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : '',
+                        maritalStatus: prof.maritalStatus || '',
+                        zipCode: prof.zipCode || '',
+                        address: prof.address || '',
+                        neighborhood: prof.neighborhood || '',
+                    });
+                }
             } catch (error) {
                 console.error('Erro ao carregar perfil', error);
             } finally {
@@ -64,6 +75,7 @@ export default function UserProfile() {
                 neighborhood: formData.neighborhood,
                 maritalStatus: formData.maritalStatus,
                 birthDate: formData.birthDate,
+                ...(formData.password ? { password: formData.password } : {})
             });
 
             alert('Perfil atualizado com sucesso!');

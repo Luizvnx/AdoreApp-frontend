@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck, Briefcase, MapPin, Calendar } from 'lucide-react';
+import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck, Briefcase, MapPin, Calendar, BarChart3 } from 'lucide-react';
 import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const canSeeMembers = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR']);
   const canManageCargos = hasAnyRole(['WORSHIP_LEADER']);
   const canManageGCs = hasAnyRole(['GC_SUPERVISOR', 'GC_LEADER']);
+  const canSeeMetrics = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER']);
 
   useEffect(() => {
     if (canSeeVisitors) {
@@ -184,6 +185,23 @@ export default function Dashboard() {
           <h3 className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wider">Ações Rápidas</h3>
 
           <div className="space-y-3">
+            {canSeeMetrics && (
+              <button
+                onClick={() => navigate('/metricas')}
+                className="w-full flex items-center justify-between bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/50 p-4 rounded-2xl transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-500/20 text-emerald-400 p-2 rounded-lg">
+                    <BarChart3 size={24} />
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold text-white">Métricas & Cultos</h4>
+                    <p className="text-xs text-slate-400">Gráficos de visitantes e frequência</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-emerald-500" size={20} />
+              </button>
+            )}
+
             {canRegisterVisitors && (
               <button
                 onClick={() => navigate('/cadastro/visitantes')}

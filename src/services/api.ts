@@ -7,12 +7,18 @@ export const api = axios.create({
     withCredentials: true, // Envia e recebe cookies HttpOnly automaticamente quando o navegador suportar
 });
 
-// Interceptor de requisições: injeta o Bearer token armazenado na sessão caso o navegador (ex: Safari no iOS) bloqueie cookies de terceiros
+// Interceptor de requisições: injeta o Bearer token e o x-override-role (se selecionado no login para teste)
 api.interceptors.request.use((config) => {
     const sessionToken = sessionStorage.getItem('sessionToken');
     if (sessionToken && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${sessionToken}`;
     }
+
+    const overrideRole = sessionStorage.getItem('overrideRole');
+    if (overrideRole) {
+        config.headers['x-override-role'] = overrideRole;
+    }
+
     return config;
 });
 

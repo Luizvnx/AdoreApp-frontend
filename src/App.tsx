@@ -11,6 +11,7 @@ import MemberProfile from './pages/MemberProfile';
 import UserProfile from './pages/UserProfile';
 import MinistryManagement from './pages/MinistryManagement';
 import GroupManagement from './pages/GroupManagement';
+import ServiceMetrics from './pages/ServiceMetrics';
 
 const App: React.FC = () => {
     return (
@@ -30,6 +31,11 @@ const App: React.FC = () => {
                     <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/perfil" element={<UserProfile />} />
+                    </Route>
+
+                    {/* Módulo de Frequência & Métricas dos Cultos */}
+                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER', 'WORSHIP_LEADER']} />}>
+                        <Route path="/metricas" element={<ServiceMetrics />} />
                     </Route>
 
                     {/* Módulo de Visitantes */}
