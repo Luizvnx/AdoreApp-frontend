@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const { showError, showSuccess } = useToast();
+  const { showError } = useToast();
 
   // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me
   useEffect(() => {
