@@ -19,11 +19,13 @@ export default function Dashboard() {
     role: 'MEMBER',
   };
 
-  const handleLogout = (): void => {
-    logout();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const confirmLogout = async (): Promise<void> => {
+    setShowLogoutModal(false);
+    await logout();
     navigate('/');
   };
-
   // Helper de RBAC (Role-Based Access Control)
   const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role];
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
@@ -43,17 +45,23 @@ export default function Dashboard() {
   const { showError } = useToast();
 
   useEffect(() => {
+    if (!user) return;
+
     if (canSeeVisitors) {
       api.get('/visitors')
         .then(res => setVisitorCount(res.data.length))
-        .catch(() => showError('Erro ao buscar total de visitantes.'));
+        .catch((err) => {
+          if (err.response?.status !== 401) showError('Erro ao buscar total de visitantes.');
+        });
     }
     if (canSeeMembers) {
       api.get('/members')
         .then(res => setMemberCount(res.data.length))
-        .catch(() => showError('Erro ao buscar total de membros.'));
+        .catch((err) => {
+          if (err.response?.status !== 401) showError('Erro ao buscar total de membros.');
+        });
     }
-  }, [canSeeVisitors, canSeeMembers]);
+  }, [canSeeVisitors, canSeeMembers, user, showError]);
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-24">
@@ -72,7 +80,7 @@ export default function Dashboard() {
             <p className="font-semibold text-cyan-400 text-xs">{currentUser.role.replace('_', ' ')}</p>
           </div>
         </div>
-        <button onClick={handleLogout} className="text-slate-400 hover:text-white p-2" title="Sair">
+        <button onClick={() => setShowLogoutModal(true)} className="text-slate-400 hover:text-white p-2" title="Sair">
           <LogOut size={20} />
         </button>
       </header>
@@ -340,6 +348,37 @@ export default function Dashboard() {
           </button>
         )}
       </nav>
+
+      {/* Modal de Confirmação de Logout */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-6">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                <LogOut size={24} className="text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Sair da Conta</h3>
+              <p className="text-sm text-slate-400">
+                Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar o aplicativo.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+              >
+                Sim, Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

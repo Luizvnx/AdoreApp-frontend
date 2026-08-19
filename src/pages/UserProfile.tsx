@@ -90,12 +90,13 @@ export default function UserProfile() {
         }
     };
 
-    // Função para Deslogar e Limpar o Cookie HttpOnly
-    const handleLogout = async () => {
-        if (window.confirm('Tem certeza que deseja sair da sua conta?')) {
-            await logout();
-            navigate('/');
-        }
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    // Função para confirmar o Logout
+    const confirmLogout = async () => {
+        setShowLogoutModal(false);
+        await logout();
+        navigate('/');
     };
 
     if (fetching) {
@@ -305,13 +306,44 @@ export default function UserProfile() {
                 {/* Botão de Logout (Sair da Conta) */}
                 <button
                     type="button"
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutModal(true)}
                     className="w-full bg-slate-900 border border-red-500/30 text-red-400 hover:bg-red-500/10 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
                 >
                     <LogOut size={20} /> Sair da Conta
                 </button>
 
             </main>
+
+            {/* Modal de Confirmação de Logout */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-6">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                            <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                                <LogOut size={24} className="text-red-500" />
+                            </div>
+                            <h3 className="text-lg font-bold text-white">Sair da Conta</h3>
+                            <p className="text-sm text-slate-400">
+                                Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar o aplicativo.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowLogoutModal(false)}
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmLogout}
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                            >
+                                Sim, Sair
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
