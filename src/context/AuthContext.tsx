@@ -36,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (err) {
         // Sessão não ativa ou expirada
         sessionStorage.removeItem('sessionToken');
+        localStorage.removeItem('sessionToken');
         sessionStorage.removeItem('overrideRole');
         setUser(null);
       } finally {
@@ -56,8 +57,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (response.data?.token) {
-        // Salva o token na sessão da aba para navegadores móveis com restrição ITP (Safari/iOS)
+        // Salva o token na sessão e no localStorage para persistência entre recarregamentos e guias
         sessionStorage.setItem('sessionToken', response.data.token);
+        localStorage.setItem('sessionToken', response.data.token);
       }
 
       let userObj = response.data.user;
@@ -86,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Erro ao efetuar logout no servidor:', err);
     } finally {
       sessionStorage.removeItem('sessionToken');
+      localStorage.removeItem('sessionToken');
       sessionStorage.removeItem('overrideRole');
       setUser(null);
     }

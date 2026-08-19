@@ -9,7 +9,7 @@ export const api = axios.create({
 
 // Interceptor de requisições: injeta o Bearer token e o x-override-role (se selecionado no login para teste)
 api.interceptors.request.use((config) => {
-    const sessionToken = sessionStorage.getItem('sessionToken');
+    const sessionToken = sessionStorage.getItem('sessionToken') || localStorage.getItem('sessionToken');
     if (sessionToken && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${sessionToken}`;
     }
@@ -28,6 +28,7 @@ api.interceptors.response.use(
     (error) => {
         if (error.response && error.response.status === 401) {
             sessionStorage.removeItem('sessionToken');
+            localStorage.removeItem('sessionToken');
             if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
                 window.location.href = '/';
             }
