@@ -1,17 +1,16 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Users, ArrowLeft } from 'lucide-react';
+import { UserPlus, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 
 export default function VisitorsHub() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
   const hasRole = (roles: string[]) => isSuperAdmin || userRoles.some(r => roles.includes(r));
-  
+
   const canRegister = hasRole(['ADMIN_WELCOME']);
 
   return (

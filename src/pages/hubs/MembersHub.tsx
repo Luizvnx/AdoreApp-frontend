@@ -1,7 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCircle } from 'lucide-react';
-import { UI_MESSAGES } from '../../constants/messages';
+import { Users } from 'lucide-react';
 
 export default function MembersHub() {
   const navigate = useNavigate();

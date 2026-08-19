@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import {
@@ -24,7 +24,7 @@ interface AttendanceMetrics {
 
 export default function PastorDashboard() {
   const { showError } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [memberCount, setMemberCount] = useState<number>(0);
@@ -73,7 +73,7 @@ export default function PastorDashboard() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
-      
+
       <header className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 flex items-center gap-2">
@@ -153,7 +153,7 @@ export default function PastorDashboard() {
           <Users size={16} /> Membresia e Crescimento
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
+
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
               <span className="text-slate-400 text-xs font-semibold">MEMBROS TOTAIS</span>
