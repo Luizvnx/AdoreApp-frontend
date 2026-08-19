@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 import type { User, UserRole } from '../types';
+import { useToast } from './ToastContext';
+import { getApiErrorMessage } from '../utils/messageHandler';
+import { UI_MESSAGES } from '../constants/messages';
 
 interface AuthContextData {
   user: User | null;
@@ -15,6 +18,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const { showError, showSuccess } = useToast();
 
   // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me
   useEffect(() => {
@@ -76,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(userObj);
     } catch (err: any) {
-      console.error('Erro na autenticação:', err);
+      showError(getApiErrorMessage(err, UI_MESSAGES.ERRORS.LOGIN_FAILED));
       throw err;
     }
   };
@@ -85,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post('/auth/logout');
     } catch (err) {
-      console.error('Erro ao efetuar logout no servidor:', err);
+      // Falha silenciosa ou avisa se precisar
     } finally {
       sessionStorage.removeItem('sessionToken');
       localStorage.removeItem('sessionToken');

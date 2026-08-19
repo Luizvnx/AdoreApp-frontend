@@ -4,6 +4,7 @@ import { UserPlus, Home, LogOut, ChevronRight, Users, UserCheck, Briefcase, MapP
 import type { User } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -39,16 +40,18 @@ export default function Dashboard() {
   const canManageGCs = hasAnyRole(['GC_SUPERVISOR', 'GC_LEADER']);
   const canSeeMetrics = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER']);
 
+  const { showError } = useToast();
+
   useEffect(() => {
     if (canSeeVisitors) {
       api.get('/visitors')
         .then(res => setVisitorCount(res.data.length))
-        .catch(err => console.error('Erro ao buscar total de visitantes:', err));
+        .catch(() => showError('Erro ao buscar total de visitantes.'));
     }
     if (canSeeMembers) {
       api.get('/members')
         .then(res => setMemberCount(res.data.length))
-        .catch(err => console.error('Erro ao buscar total de membros:', err));
+        .catch(() => showError('Erro ao buscar total de membros.'));
     }
   }, [canSeeVisitors, canSeeMembers]);
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, UserCheck, Shield, ChevronRight, Briefcase, Users } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
 
 interface Member {
     id: string;
@@ -20,6 +22,7 @@ interface Member {
 
 export default function MemberList() {
     const navigate = useNavigate();
+    const { showError } = useToast();
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +35,7 @@ export default function MemberList() {
             const response = await api.get('/members');
             setMembers(response.data);
         } catch (error) {
-            console.error('Erro ao buscar membros:', error);
+            showError(UI_MESSAGES.ERRORS.LOAD_MEMBERS);
         } finally {
             setLoading(false);
         }

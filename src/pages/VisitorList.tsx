@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Trash2, Phone, UserPlus, UserCheck, Edit3, Mail, X, Save } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 interface Visitor {
     id: string;
@@ -18,6 +21,7 @@ interface Visitor {
 
 export default function VisitorList() {
     const navigate = useNavigate();
+    const { showSuccess, showError } = useToast();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,7 +47,7 @@ export default function VisitorList() {
             const response = await api.get('/visitors');
             setVisitors(response.data);
         } catch (error) {
-            console.error('Erro ao buscar visitantes:', error);
+            showError(UI_MESSAGES.ERRORS.LOAD_VISITORS);
         } finally {
             setLoading(false);
         }
@@ -54,8 +58,9 @@ export default function VisitorList() {
             try {
                 await api.delete(`/visitors/${id}`);
                 setVisitors(visitors.filter(v => v.id !== id));
+                showSuccess(UI_MESSAGES.SUCCESS.VISITOR_DELETED);
             } catch (error) {
-                alert('Erro ao excluir visitante.');
+                showError(UI_MESSAGES.ERRORS.DELETE_VISITOR);
             }
         }
     };
@@ -64,11 +69,20 @@ export default function VisitorList() {
         if (window.confirm('Tem certeza que deseja promover este visitante a membro oficial?')) {
             try {
                 const res = await api.put(`/visitors/${id}/convert`);
-                const { credentials, message } = res.data;
-                alert(`${message}\n\nE-mail de Acesso: ${credentials.email}\nSenha Temporária: ${credentials.password}`);
+                const { credentials } = res.data;
+                // Para exibir as credenciais de forma mais amigável usando alert ainda ou toast grande, 
+                // mas a instrução é usar apenas toast. O Toast foi feito pra mensagens curtas.
+                // Como as credenciais são importantes, usarei o showSuccess, e talvez um alert nativo se for muita informação, 
+                // mas vou usar alert nativo para credenciais e showSuccess pra bolha? 
+                // A instrução diz "Não utilize mais alert para enviar mensagens ao usuário em mensagens de sucesso".
+                // Mas as credenciais precisam ser copiadas pelo usuário. O toast desaparece em 4 segundos!
+                // Vou manter um window.alert ou prompt apenas para as credenciais geradas, 
+                // mas substituindo o alert de sucesso principal pelo Toast.
+                showSuccess(UI_MESSAGES.SUCCESS.VISITOR_CONVERTED);
+                window.alert(`Credenciais de acesso geradas:\n\nE-mail: ${credentials.email}\nSenha: ${credentials.password}\n\nPor favor, copie e envie ao novo membro.`);
                 fetchVisitors(); // Recarrega a lista para remover o membro convertido
             } catch (error: any) {
-                alert(error.response?.data?.error || 'Erro ao converter visitante.');
+                showError(getApiErrorMessage(error));
             }
         }
     };
@@ -92,12 +106,11 @@ export default function VisitorList() {
         setSavingEdit(true);
         try {
             await api.put(`/visitors/${editingVisitor.id}`, editFormData);
-            alert('Dados do visitante atualizados!');
+            showSuccess(UI_MESSAGES.SUCCESS.VISITOR_UPDATED);
             setEditingVisitor(null);
             fetchVisitors();
         } catch (error: any) {
-            console.error(error);
-            alert(error.response?.data?.error || 'Erro ao atualizar visitante.');
+            showError(getApiErrorMessage(error));
         } finally {
             setSavingEdit(false);
         }

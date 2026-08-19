@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut, Users, Briefcase } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 export default function UserProfile() {
     const navigate = useNavigate();
     const { user: currentUser, logout } = useAuth();
+    const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
 
@@ -48,7 +52,7 @@ export default function UserProfile() {
                     });
                 }
             } catch (error) {
-                console.error('Erro ao carregar perfil', error);
+                showError(UI_MESSAGES.ERRORS.LOAD_PROFILE);
             } finally {
                 setFetching(false);
             }
@@ -78,10 +82,9 @@ export default function UserProfile() {
                 ...(formData.password ? { password: formData.password } : {})
             });
 
-            alert('Perfil atualizado com sucesso!');
+            showSuccess(UI_MESSAGES.SUCCESS.PROFILE_UPDATED);
         } catch (error) {
-            console.error(error);
-            alert('Erro ao atualizar perfil.');
+            showError(getApiErrorMessage(error, UI_MESSAGES.ERRORS.UPDATE_PROFILE));
         } finally {
             setLoading(false);
         }

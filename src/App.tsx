@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -15,56 +16,58 @@ import ServiceMetrics from './pages/ServiceMetrics';
 
 const App: React.FC = () => {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <Routes>
-                    <Route
-                        path="/"
-                        element={
-                            <PublicOnlyRoute>
-                                <Login />
-                            </PublicOnlyRoute>
-                        }
-                    />
+        <ToastProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={
+                                <PublicOnlyRoute>
+                                    <Login />
+                                </PublicOnlyRoute>
+                            }
+                        />
 
-                    {/* Rotas protegidas gerais */}
-                    <Route element={<ProtectedRoute />}>
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/perfil" element={<UserProfile />} />
-                    </Route>
+                        {/* Rotas protegidas gerais */}
+                        <Route element={<ProtectedRoute />}>
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/perfil" element={<UserProfile />} />
+                        </Route>
 
-                    {/* Módulo de Frequência & Métricas dos Cultos */}
-                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER', 'WORSHIP_LEADER']} />}>
-                        <Route path="/metricas" element={<ServiceMetrics />} />
-                    </Route>
+                        {/* Módulo de Frequência & Métricas dos Cultos */}
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER', 'WORSHIP_LEADER']} />}>
+                            <Route path="/metricas" element={<ServiceMetrics />} />
+                        </Route>
 
-                    {/* Módulo de Visitantes */}
-                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME']} />}>
-                        <Route path="/cadastro/visitantes" element={<VisitorRegistration />} />
-                    </Route>
+                        {/* Módulo de Visitantes */}
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME']} />}>
+                            <Route path="/cadastro/visitantes" element={<VisitorRegistration />} />
+                        </Route>
 
-                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
-                        <Route path="/visitantes" element={<VisitorList />} />
-                        <Route path="/membros" element={<MemberList />} />
-                        <Route path="/membros/:id" element={<MemberProfile />} />
-                        <Route path="/membros/:id/editar" element={<MemberProfile />} />
-                    </Route>
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
+                            <Route path="/visitantes" element={<VisitorList />} />
+                            <Route path="/membros" element={<MemberList />} />
+                            <Route path="/membros/:id" element={<MemberProfile />} />
+                            <Route path="/membros/:id/editar" element={<MemberProfile />} />
+                        </Route>
 
-                    {/* Módulo de Cargos & Ministérios */}
-                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'WORSHIP_LEADER']} />}>
-                        <Route path="/cargos" element={<MinistryManagement />} />
-                    </Route>
+                        {/* Módulo de Cargos & Ministérios */}
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'WORSHIP_LEADER']} />}>
+                            <Route path="/cargos" element={<MinistryManagement />} />
+                        </Route>
 
-                    {/* Módulo de Grupos de Conexão (GCs) */}
-                    <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
-                        <Route path="/gcs" element={<GroupManagement />} />
-                    </Route>
+                        {/* Módulo de Grupos de Conexão (GCs) */}
+                        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
+                            <Route path="/gcs" element={<GroupManagement />} />
+                        </Route>
 
-                    {/* Redirecionamento fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+                        {/* Redirecionamento fallback */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </BrowserRouter>
+            </AuthProvider>
+        </ToastProvider>
     );
 };
 

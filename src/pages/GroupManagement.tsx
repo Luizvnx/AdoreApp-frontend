@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Plus, Trash2, ShieldCheck, Sparkles, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Users, Plus, Trash2, Sparkles, MapPin, Calendar } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 export interface ConnectionGroupItem {
   id: string;
@@ -17,6 +20,7 @@ export interface ConnectionGroupItem {
 
 export default function GroupManagement() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [groups, setGroups] = useState<ConnectionGroupItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -25,8 +29,6 @@ export default function GroupManagement() {
   const [meetingTime, setMeetingTime] = useState('');
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     fetchGroups();
@@ -38,8 +40,7 @@ export default function GroupManagement() {
       const response = await api.get('/connection-groups');
       setGroups(response.data);
     } catch (error) {
-      console.error('Erro ao buscar GCs:', error);
-      setErrorMsg('Erro ao carregar lista de Grupos de Conexão.');
+      showError(UI_MESSAGES.ERRORS.LOAD_GROUPS);
     } finally {
       setLoading(false);
     }
@@ -51,8 +52,6 @@ export default function GroupManagement() {
 
     try {
       setAdding(true);
-      setErrorMsg('');
-      setSuccessMsg('');
 
       const res = await api.post('/connection-groups', {
         name: name.trim(),
@@ -66,12 +65,9 @@ export default function GroupManagement() {
       setNeighborhood('');
       setMeetingDay('');
       setMeetingTime('');
-      setSuccessMsg(`Grupo de Conexão "${res.data.name}" cadastrado com sucesso!`);
-
-      setTimeout(() => setSuccessMsg(''), 3000);
+      showSuccess(UI_MESSAGES.SUCCESS.GROUP_CREATED);
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.error || 'Erro ao cadastrar novo GC.');
+      showError(getApiErrorMessage(err, 'Erro ao cadastrar novo GC.'));
     } finally {
       setAdding(false);
     }
@@ -84,11 +80,9 @@ export default function GroupManagement() {
       setDeletingId(id);
       await api.delete(`/connection-groups/${id}`);
       setGroups((prev) => prev.filter((g) => g.id !== id));
-      setSuccessMsg(`GC "${groupName}" excluído.`);
-      setTimeout(() => setSuccessMsg(''), 3000);
+      showSuccess(UI_MESSAGES.SUCCESS.GROUP_DELETED);
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.error || 'Erro ao excluir GC.');
+      showError(UI_MESSAGES.ERRORS.DELETE_GROUP);
     } finally {
       setDeletingId(null);
     }
@@ -133,19 +127,6 @@ export default function GroupManagement() {
             <Plus size={16} className="text-cyan-400" />
             Criar Novo Grupo de Conexão (GC)
           </h2>
-
-          {errorMsg && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl">
-              {errorMsg}
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs p-3 rounded-xl flex items-center gap-2">
-              <ShieldCheck size={16} />
-              {successMsg}
-            </div>
-          )}
 
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-400">Nome do GC *</label>

@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 import type { UserRole } from '../types';
 
 interface Member {
@@ -50,6 +53,7 @@ export default function MemberProfile() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
+    const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [member, setMember] = useState<Member | null>(null);
@@ -90,7 +94,7 @@ export default function MemberProfile() {
                 const minRes = await api.get('/ministries');
                 setAvailableMinistries(minRes.data);
             } catch (err) {
-                console.error('Erro ao buscar cargos:', err);
+                // showError not needed for silent load failures
             }
 
             // Buscar lista de GCs disponíveis
@@ -98,7 +102,7 @@ export default function MemberProfile() {
                 const groupRes = await api.get('/connection-groups');
                 setAvailableGroups(groupRes.data);
             } catch (err) {
-                console.error('Erro ao buscar GCs:', err);
+                // showError not needed for silent load failures
             }
 
             // Buscar dados do membro
@@ -123,12 +127,11 @@ export default function MemberProfile() {
                     }
                 }
             } else {
-                alert('Membro não encontrado.');
+                showError('Membro não encontrado.');
                 navigate('/membros');
             }
         } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao carregar membro.');
+            showError('Erro ao carregar membro.');
         } finally {
             setLoading(false);
         }
@@ -168,11 +171,10 @@ export default function MemberProfile() {
                 roles: selectedRoles
             });
             
-            alert('Perfil atualizado com sucesso!');
+            showSuccess(UI_MESSAGES.SUCCESS.PROFILE_UPDATED);
             navigate('/membros');
         } catch (error) {
-            console.error(error);
-            alert('Erro ao atualizar membro.');
+            showError(getApiErrorMessage(error, UI_MESSAGES.ERRORS.UPDATE_PROFILE));
         } finally {
             setSaving(false);
         }

@@ -11,10 +11,12 @@ import {
   Sparkles,
   Award,
   Clock,
-  Check,
-  AlertCircle
+  Check
 } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 interface SummaryData {
   totalVisitors: number;
@@ -71,6 +73,7 @@ const PRESET_SERVICES = [
 
 export default function ServiceMetrics() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [activeTab, setActiveTab] = useState<'metrics' | 'register'>('metrics');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,9 +102,6 @@ export default function ServiceMetrics() {
   );
   const [notes, setNotes] = useState('');
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   useEffect(() => {
     fetchData();
   }, []);
@@ -126,7 +126,7 @@ export default function ServiceMetrics() {
         setAttendanceRecords(attendanceRes.data || []);
       }
     } catch (err) {
-      console.error('Erro ao carregar métricas:', err);
+      showError(UI_MESSAGES.ERRORS.LOAD_METRICS);
     } finally {
       setLoading(false);
     }
@@ -137,19 +137,17 @@ export default function ServiceMetrics() {
     const selectedName = serviceName === 'OUTRO' ? customServiceName : serviceName;
 
     if (!selectedName.trim()) {
-      setErrorMessage('Por favor, informe o nome do culto.');
+      showError('Por favor, informe o nome do culto.');
       return;
     }
 
     if (attendanceCount === '' || Number(attendanceCount) < 0) {
-      setErrorMessage('Por favor, informe uma quantidade válida de pessoas.');
+      showError('Por favor, informe uma quantidade válida de pessoas.');
       return;
     }
 
     try {
       setSaving(true);
-      setErrorMessage(null);
-      setSuccessMessage(null);
 
       await api.post('/attendance', {
         date: serviceDate,
@@ -158,7 +156,7 @@ export default function ServiceMetrics() {
         notes: notes.trim()
       });
 
-      setSuccessMessage('Frequência de culto registrada com sucesso!');
+      showSuccess(UI_MESSAGES.SUCCESS.ATTENDANCE_REGISTERED);
       setServiceName('');
       setCustomServiceName('');
       setAttendanceCount('');
@@ -166,12 +164,8 @@ export default function ServiceMetrics() {
 
       // Recarrega os dados e alterna para a aba de histórico/gráficos se desejar
       await fetchData();
-      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
-      console.error('Erro ao registrar frequência:', err);
-      setErrorMessage(
-        err.response?.data?.error || 'Erro ao registrar frequência do culto.'
-      );
+      showError(getApiErrorMessage(err, UI_MESSAGES.ERRORS.REGISTER_ATTENDANCE));
     } finally {
       setSaving(false);
     }
@@ -183,10 +177,10 @@ export default function ServiceMetrics() {
       setDeletingId(id);
       await api.delete(`/attendance/${id}`);
       setAttendanceRecords(prev => prev.filter(item => item.id !== id));
+      showSuccess(UI_MESSAGES.SUCCESS.ATTENDANCE_DELETED);
       await fetchData();
     } catch (err) {
-      console.error('Erro ao excluir culto:', err);
-      alert('Não foi possível excluir o lançamento.');
+      showError(UI_MESSAGES.ERRORS.DELETE_ATTENDANCE);
     } finally {
       setDeletingId(null);
     }
@@ -476,20 +470,6 @@ export default function ServiceMetrics() {
                 <Plus size={18} className="text-cyan-400" />
                 Registrar Frequência de Culto
               </h2>
-
-              {successMessage && (
-                <div className="mb-5 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs sm:text-sm flex items-center gap-2">
-                  <Check size={18} className="shrink-0" />
-                  <span>{successMessage}</span>
-                </div>
-              )}
-
-              {errorMessage && (
-                <div className="mb-5 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs sm:text-sm flex items-center gap-2">
-                  <AlertCircle size={18} className="shrink-0" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
 
               <form onSubmit={handleCreateAttendance} className="space-y-4">
                 {/* Data do Culto */}

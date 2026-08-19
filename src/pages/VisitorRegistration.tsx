@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, MapPin, Phone, User, Heart, Mail } from 'lucide-react';
-import { api } from '../services/api'; // Importando nossa API
+import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 export default function VisitorRegistration() {
     const navigate = useNavigate();
+    const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
 
     // Estado para armazenar os dados do formulário
@@ -38,12 +42,10 @@ export default function VisitorRegistration() {
 
         try {
             await api.post('/visitors', formData);
-            alert('Visitante cadastrado com sucesso!');
+            showSuccess(UI_MESSAGES.SUCCESS.VISITOR_REGISTERED);
             navigate('/visitantes');
         } catch (error: any) {
-            console.error(error);
-            const msg = error.response?.data?.error || 'Erro ao cadastrar visitante.';
-            alert(msg);
+            showError(getApiErrorMessage(error));
         } finally {
             setLoading(false);
         }

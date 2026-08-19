@@ -1,48 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, UserCheck, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Shield, Mail, Lock, UserCheck, Eye, EyeOff } from 'lucide-react';
 import type { UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+//import { UI_MESSAGES } from '../constants/messages';
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showError } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('SUPER_ADMIN');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMessage('Por favor, preencha todos os campos.');
+      showError('Por favor, preencha todos os campos.');
       return;
     }
 
     try {
       setLoading(true);
-      setErrorMessage(null);
       await login(email, password, role);
       navigate('/dashboard');
     } catch (err: any) {
-      console.error('Erro de autenticação:', err);
-      if (!err.response) {
-        setErrorMessage('Não foi possível conectar ao servidor. Verifique sua conexão ou se a API está acessível.');
-      } else if (err.response.status === 429) {
-        setErrorMessage(
-          err.response.data?.error ||
-          'Excesso de tentativas. Por favor, aguarde.'
-        );
-      } else {
-        setErrorMessage(
-          err.response.data?.error ||
-          err.response.data?.message ||
-          'E-mail ou senha incorretos.'
-        );
-      }
     } finally {
       setLoading(false);
     }
@@ -72,14 +58,6 @@ export default function Login() {
             Gestão Integrada para a sua Igreja
           </p>
         </div>
-
-        {/* Error message banner */}
-        {errorMessage && (
-          <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center gap-3 text-red-400 text-sm animate-fade-in">
-            <AlertCircle size={20} className="shrink-0 text-red-400" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">

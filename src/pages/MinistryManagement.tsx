@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, Plus, Trash2, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, Briefcase, Plus, Trash2, Sparkles } from 'lucide-react';
 import { api } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { UI_MESSAGES } from '../constants/messages';
+import { getApiErrorMessage } from '../utils/messageHandler';
 
 export interface Ministry {
   id: string;
@@ -12,14 +15,13 @@ export interface Ministry {
 
 export default function MinistryManagement() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [ministries, setMinistries] = useState<Ministry[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMinistryName, setNewMinistryName] = useState('');
   const [newMinistryDesc, setNewMinistryDesc] = useState('');
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     fetchMinistries();
@@ -31,8 +33,7 @@ export default function MinistryManagement() {
       const response = await api.get('/ministries');
       setMinistries(response.data);
     } catch (error) {
-      console.error('Erro ao buscar cargos/ministérios:', error);
-      setErrorMsg('Erro ao carregar lista de cargos.');
+      showError(UI_MESSAGES.ERRORS.LOAD_MINISTRIES);
     } finally {
       setLoading(false);
     }
@@ -44,8 +45,6 @@ export default function MinistryManagement() {
 
     try {
       setAdding(true);
-      setErrorMsg('');
-      setSuccessMsg('');
 
       const res = await api.post('/ministries', {
         name: newMinistryName.trim(),
@@ -55,12 +54,10 @@ export default function MinistryManagement() {
       setMinistries((prev) => [...prev, res.data].sort((a, b) => a.name.localeCompare(b.name)));
       setNewMinistryName('');
       setNewMinistryDesc('');
-      setSuccessMsg(`Cargo "${res.data.name}" cadastrado com sucesso!`);
+      showSuccess(UI_MESSAGES.SUCCESS.MINISTRY_CREATED);
 
-      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.error || 'Erro ao cadastrar novo cargo.');
+      showError(getApiErrorMessage(err, 'Erro ao cadastrar novo cargo.'));
     } finally {
       setAdding(false);
     }
@@ -73,11 +70,9 @@ export default function MinistryManagement() {
       setDeletingId(id);
       await api.delete(`/ministries/${id}`);
       setMinistries((prev) => prev.filter((m) => m.id !== id));
-      setSuccessMsg(`Cargo "${name}" excluído.`);
-      setTimeout(() => setSuccessMsg(''), 3000);
+      showSuccess(UI_MESSAGES.SUCCESS.MINISTRY_DELETED);
     } catch (err: any) {
-      console.error(err);
-      setErrorMsg(err.response?.data?.error || 'Erro ao excluir cargo.');
+      showError(UI_MESSAGES.ERRORS.DELETE_MINISTRY);
     } finally {
       setDeletingId(null);
     }
@@ -122,19 +117,6 @@ export default function MinistryManagement() {
             <Plus size={16} className="text-cyan-400" />
             Cadastrar Novo Cargo na Igreja
           </h2>
-
-          {errorMsg && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-xs p-3 rounded-xl">
-              {errorMsg}
-            </div>
-          )}
-
-          {successMsg && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs p-3 rounded-xl flex items-center gap-2">
-              <ShieldCheck size={16} />
-              {successMsg}
-            </div>
-          )}
 
           <div className="space-y-2">
             <label className="text-xs font-semibold text-slate-400">Nome do Cargo / Ministério *</label>
