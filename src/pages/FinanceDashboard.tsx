@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, PlusCircle, Calendar as CalendarIcon, List, CalendarDays, RefreshCw, FileText, FileSpreadsheet, Edit2, History, Filter, Search } from 'lucide-react';
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, PlusCircle, Calendar as CalendarIcon, List, CalendarDays, RefreshCw, FileText, Edit2, History, Filter, Search, Download } from 'lucide-react';
 import { exportFinanceToPDF, exportFinanceToExcel } from '../utils/reportUtils';
 import { useFinance, type Transaction } from '../hooks/useFinance';
-//import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
+const getPaymentMethodLabel = (method?: string) => {
+  switch (method) {
+    case 'PIX': return 'Pix';
+    case 'DINHEIRO': return 'Dinheiro';
+    case 'DEBITO': return 'Débito';
+    case 'CREDITO': return 'Crédito';
+    case 'TRANSFERENCIA': return 'Transferência';
+    default: return method || 'Pix';
+  }
+};
+
 export default function FinanceDashboard() {
   const navigate = useNavigate();
-  //const { user } = useAuth();
   const { showError, showSuccess } = useToast();
 
   const {
@@ -33,23 +42,26 @@ export default function FinanceDashboard() {
   const [filterCategory, setFilterCategory] = useState('ALL');
 
   React.useEffect(() => {
-    fetchFilteredTransactions(filterMonth, filterYear, filterCategory);
+    fetchFilteredTransactions({ month: filterMonth, year: filterYear, category: filterCategory });
   }, [filterMonth, filterYear, filterCategory]);
 
   // Modals state
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [showFixedExpenseModal, setShowFixedExpenseModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedHistoryTransaction, setSelectedHistoryTransaction] = useState<Transaction | null>(null);
 
+  // Form de Lançamento com Forma de Pagamento
   const [transactionForm, setTransactionForm] = useState({
     title: '',
     type: 'INCOME',
     amount: '',
     date: new Date().toISOString().split('T')[0],
     category: 'DIZIMO_OFERTA',
+    paymentMethod: 'PIX',
     notes: '',
   });
 
@@ -59,6 +71,18 @@ export default function FinanceDashboard() {
     dueDate: '1',
     notes: '',
   });
+
+  // Configurações do Relatório Personalizado
+  const [reportConfig, setReportConfig] = useState({
+    type: 'ALL', // 'ALL' | 'INCOME' | 'EXPENSE'
+    period: 'MONTH', // 'WEEK' | 'MONTH' | 'YEAR' | 'CUSTOM'
+    paymentMethod: 'ALL',
+    month: String(new Date().getMonth() + 1),
+    year: String(new Date().getFullYear()),
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+  });
+  const [loadingReport, setLoadingReport] = useState(false);
 
   const handleTransactionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +97,13 @@ export default function FinanceDashboard() {
     if (success) {
       setShowTransactionModal(false);
       setSelectedTransactionId(null);
-      setTransactionForm({ ...transactionForm, title: '', amount: '', notes: '' });
+      setTransactionForm({
+        ...transactionForm,
+        title: '',
+        amount: '',
+        notes: '',
+        paymentMethod: 'PIX'
+      });
     }
   };
 
@@ -85,6 +115,7 @@ export default function FinanceDashboard() {
       amount: String(t.amount),
       date: new Date(t.date).toISOString().split('T')[0],
       category: t.category,
+      paymentMethod: t.paymentMethod || 'PIX',
       notes: t.notes || ''
     });
     setShowTransactionModal(true);
@@ -104,23 +135,62 @@ export default function FinanceDashboard() {
     }
   };
 
-  const exportToPDF = async () => {
+  // Geração de Relatório PDF / Excel com opções avançadas e totais
+  const handleGenerateReport = async (format: 'PDF' | 'EXCEL') => {
     try {
-      const res = await api.get('/finance/transactions');
-      exportFinanceToPDF(res.data, metrics?.period || '');
-      showSuccess('PDF gerado com sucesso!');
-    } catch (error) {
-      showError('Erro ao gerar PDF.');
-    }
-  };
+      setLoadingReport(true);
+      
+      const params: any = {
+        type: reportConfig.type,
+        paymentMethod: reportConfig.paymentMethod,
+      };
 
-  const exportToExcel = async () => {
-    try {
-      const res = await api.get('/finance/transactions');
-      exportFinanceToExcel(res.data, metrics?.period || '');
-      showSuccess('Excel gerado com sucesso!');
+      let periodTitle = '';
+      if (reportConfig.period === 'CUSTOM') {
+        params.startDate = reportConfig.startDate;
+        params.endDate = reportConfig.endDate;
+        periodTitle = `De ${new Date(reportConfig.startDate).toLocaleDateString('pt-BR')} até ${new Date(reportConfig.endDate).toLocaleDateString('pt-BR')}`;
+      } else if (reportConfig.period === 'WEEK') {
+        params.period = 'WEEK';
+        periodTitle = 'Da Semana Atual';
+      } else if (reportConfig.period === 'YEAR') {
+        params.period = 'YEAR';
+        params.year = reportConfig.year;
+        periodTitle = `Ano Completo (${reportConfig.year})`;
+      } else {
+        params.month = reportConfig.month;
+        params.year = reportConfig.year;
+        const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        periodTitle = `${monthNames[Number(reportConfig.month) - 1]} / ${reportConfig.year}`;
+      }
+
+      // Adiciona detalhamento do filtro de tipo no título
+      if (reportConfig.type === 'INCOME') periodTitle += ' (Somente Entradas)';
+      if (reportConfig.type === 'EXPENSE') periodTitle += ' (Somente Saídas)';
+      if (reportConfig.paymentMethod !== 'ALL') periodTitle += ` [Forma: ${getPaymentMethodLabel(reportConfig.paymentMethod)}]`;
+
+      const res = await api.get('/finance/transactions', { params });
+      const data = res.data;
+
+      if (!data || data.length === 0) {
+        showError('Nenhuma movimentação encontrada para os filtros selecionados.');
+        return;
+      }
+
+      if (format === 'PDF') {
+        exportFinanceToPDF(data, periodTitle);
+        showSuccess('Relatório PDF gerado com sucesso!');
+      } else {
+        exportFinanceToExcel(data, periodTitle);
+        showSuccess('Relatório Excel gerado com sucesso!');
+      }
+
+      setShowReportModal(false);
     } catch (error) {
-      showError('Erro ao gerar Excel.');
+      console.error('Erro ao gerar relatório:', error);
+      showError('Erro ao gerar relatório.');
+    } finally {
+      setLoadingReport(false);
     }
   };
 
@@ -151,11 +221,8 @@ export default function FinanceDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={exportToPDF} title="Exportar PDF" className="p-2 text-rose-400 hover:text-rose-300 hover:bg-slate-800 rounded-full transition-colors">
-            <FileText size={18} />
-          </button>
-          <button onClick={exportToExcel} title="Exportar Excel" className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-slate-800 rounded-full transition-colors">
-            <FileSpreadsheet size={18} />
+          <button onClick={() => setShowReportModal(true)} title="Gerar Relatório Financeiro" className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow">
+            <FileText size={16} /> Relatórios
           </button>
           <button onClick={fetchData} title="Atualizar Dados" className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full ml-1">
             <RefreshCw size={16} />
@@ -203,7 +270,7 @@ export default function FinanceDashboard() {
         {/* Ações Rápidas */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => { setTransactionForm({ ...transactionForm, type: 'INCOME' }); setShowTransactionModal(true); }}
+            onClick={() => { setTransactionForm({ ...transactionForm, type: 'INCOME', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
             className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
           >
             <TrendingUp size={24} />
@@ -211,7 +278,7 @@ export default function FinanceDashboard() {
           </button>
 
           <button
-            onClick={() => { setTransactionForm({ ...transactionForm, type: 'EXPENSE' }); setShowTransactionModal(true); }}
+            onClick={() => { setTransactionForm({ ...transactionForm, type: 'EXPENSE', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
             className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
           >
             <TrendingDown size={24} />
@@ -252,7 +319,9 @@ export default function FinanceDashboard() {
                             </button>
                           )}
                         </div>
-                        <p className="text-[10px] text-slate-500">{new Date(t.date).toLocaleDateString()} - {t.category.replace('_', ' ')}</p>
+                        <p className="text-[10px] text-slate-500">
+                          {new Date(t.date).toLocaleDateString()} - {t.category.replace('_', ' ')} • <span className="text-cyan-400 font-medium">{getPaymentMethodLabel(t.paymentMethod)}</span>
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -296,7 +365,7 @@ export default function FinanceDashboard() {
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold text-amber-400">{formatCurrency(f.amount)}</span>
                       <button onClick={() => deleteFixedExpense(f.id)} className="text-slate-600 hover:text-red-400">
-                        <ArrowLeft size={14} className="rotate-45" /> {/* Excluir fake icon */}
+                        <ArrowLeft size={14} className="rotate-45" />
                       </button>
                     </div>
                   </div>
@@ -307,13 +376,13 @@ export default function FinanceDashboard() {
 
         </div>
 
-        {/* Nova Seção: Histórico Completo de Movimentações */}
+        {/* Histórico Completo de Movimentações */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 mt-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 pb-4 border-b border-slate-800 gap-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <History size={20} className="text-cyan-400" /> Histórico Completo
             </h2>
-            
+
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 focus-within:border-cyan-500 transition-colors">
                 <Filter size={14} className="text-slate-500 mr-2" />
@@ -332,7 +401,7 @@ export default function FinanceDashboard() {
                   <option value="OUTROS">Outros</option>
                 </select>
               </div>
-              
+
               <select
                 value={filterMonth}
                 onChange={(e) => setFilterMonth(e.target.value)}
@@ -362,8 +431,8 @@ export default function FinanceDashboard() {
                 ))}
               </select>
 
-              <button 
-                onClick={() => fetchFilteredTransactions(filterMonth, filterYear, filterCategory)}
+              <button
+                onClick={() => fetchFilteredTransactions({ month: filterMonth, year: filterYear, category: filterCategory })}
                 disabled={loadingHistory}
                 className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 p-2 rounded-lg transition-colors flex items-center justify-center disabled:opacity-50"
                 title="Buscar"
@@ -380,6 +449,7 @@ export default function FinanceDashboard() {
                   <th className="pb-3 font-semibold pl-2">Data</th>
                   <th className="pb-3 font-semibold">Tipo</th>
                   <th className="pb-3 font-semibold">Descrição</th>
+                  <th className="pb-3 font-semibold">Forma de Pagto</th>
                   <th className="pb-3 font-semibold">Categoria</th>
                   <th className="pb-3 font-semibold">Status</th>
                   <th className="pb-3 font-semibold text-right pr-2">Valor</th>
@@ -389,7 +459,7 @@ export default function FinanceDashboard() {
               <tbody className="divide-y divide-slate-800/50">
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center text-sm text-slate-500 py-8">
+                    <td colSpan={8} className="text-center text-sm text-slate-500 py-8">
                       Nenhuma movimentação encontrada para estes filtros.
                     </td>
                   </tr>
@@ -407,18 +477,21 @@ export default function FinanceDashboard() {
                       <td className="py-4 text-sm text-slate-200 font-medium">
                         {t.title}
                       </td>
+                      <td className="py-4 text-sm text-cyan-400 font-medium">
+                        {getPaymentMethodLabel(t.paymentMethod)}
+                      </td>
                       <td className="py-4 text-sm text-slate-400">
                         {t.category.replace('_', ' ')}
                       </td>
                       <td className="py-4">
                         {(t.editHistory && t.editHistory.length > 0) ? (
                           <button
-                             onClick={() => handleViewHistory(t)}
-                             className="text-[10px] font-bold uppercase bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded flex items-center gap-1 hover:bg-amber-500/20 transition-colors"
-                             title="Ver histórico de edições"
-                           >
-                             <History size={10} /> Editado
-                           </button>
+                            onClick={() => handleViewHistory(t)}
+                            className="text-[10px] font-bold uppercase bg-amber-500/10 text-amber-500 px-2 py-0.5 rounded flex items-center gap-1 hover:bg-amber-500/20 transition-colors"
+                            title="Ver histórico de edições"
+                          >
+                            <History size={10} /> Editado
+                          </button>
                         ) : (
                           <span className="text-[10px] font-bold uppercase text-slate-600 px-2 py-0.5">Original</span>
                         )}
@@ -444,7 +517,7 @@ export default function FinanceDashboard() {
         </div>
       </main>
 
-      {/* Modal de Transação */}
+      {/* Modal de Transação com Forma de Pagamento */}
       {showTransactionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
@@ -476,26 +549,38 @@ export default function FinanceDashboard() {
                   <input required type="date" value={transactionForm.date} onChange={e => setTransactionForm({ ...transactionForm, date: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none" />
                 </div>
               </div>
-              <div>
-                <label className="text-xs text-slate-400">Categoria</label>
-                <select required value={transactionForm.category} onChange={e => setTransactionForm({ ...transactionForm, category: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none">
-                  {transactionForm.type === 'INCOME' ? (
-                    <>
-                      <option value="DIZIMO_OFERTA">Dízimo ou Oferta</option>
-                      <option value="DOACAO">Doação</option>
-                      <option value="EVENTOS">Eventos</option>
-                      <option value="OUTROS">Outros</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="GASTO_FIXO">Gasto Fixo (Água, Luz, Aluguel)</option>
-                      <option value="GASTO_VARIAVEL">Gasto Variável</option>
-                      <option value="MANUTENCAO">Manutenção / Equipamentos</option>
-                      <option value="EVENTOS">Eventos</option>
-                      <option value="OUTROS">Outros</option>
-                    </>
-                  )}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs text-slate-400">Categoria</label>
+                  <select required value={transactionForm.category} onChange={e => setTransactionForm({ ...transactionForm, category: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none">
+                    {transactionForm.type === 'INCOME' ? (
+                      <>
+                        <option value="DIZIMO_OFERTA">Dízimo ou Oferta</option>
+                        <option value="DOACAO">Doação</option>
+                        <option value="EVENTOS">Eventos</option>
+                        <option value="OUTROS">Outros</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="GASTO_FIXO">Gasto Fixo (Água, Luz, Aluguel)</option>
+                        <option value="GASTO_VARIAVEL">Gasto Variável</option>
+                        <option value="MANUTENCAO">Manutenção / Equipamentos</option>
+                        <option value="EVENTOS">Eventos</option>
+                        <option value="OUTROS">Outros</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-400">Forma de Pagamento</label>
+                  <select required value={transactionForm.paymentMethod} onChange={e => setTransactionForm({ ...transactionForm, paymentMethod: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none">
+                    <option value="PIX">Pix</option>
+                    <option value="DINHEIRO">Dinheiro</option>
+                    <option value="DEBITO">Débito</option>
+                    <option value="CREDITO">Crédito</option>
+                    <option value="TRANSFERENCIA">Transferência Bancária</option>
+                  </select>
+                </div>
               </div>
               <button type="submit" className={`w-full font-bold py-3 rounded-xl mt-2 transition-colors ${transactionForm.type === 'INCOME' ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'}`}>
                 Salvar Lançamento
@@ -535,7 +620,8 @@ export default function FinanceDashboard() {
           </div>
         </div>
       )}
-      {/* Modal de Histórico (Diff) */}
+
+      {/* Modal de Histórico de Edições */}
       {showHistoryModal && selectedHistoryTransaction && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
@@ -554,7 +640,9 @@ export default function FinanceDashboard() {
               {selectedHistoryTransaction.editHistory?.map((history: any, index: number) => (
                 <div key={index} className="border border-slate-800 rounded-xl overflow-hidden">
                   <div className="bg-slate-800/50 p-3 flex justify-between items-center border-b border-slate-800">
-                    <span className="text-xs text-amber-400 font-bold">Edição #{index + 1}</span>
+                    <span className="text-xs text-amber-400 font-bold">
+                      Edição #{index + 1} - {history.editedByName || selectedHistoryTransaction.editedBy?.fullName || 'Desconhecido'}
+                    </span>
                     <span className="text-[10px] text-slate-400">{new Date(history.editedAt).toLocaleString('pt-BR')}</span>
                   </div>
                   <div className="p-4 space-y-3">
@@ -580,6 +668,162 @@ export default function FinanceDashboard() {
             <div className="p-4 border-t border-slate-800 flex justify-end">
               <button onClick={() => setShowHistoryModal(false)} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-colors">
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configuração e Geração de Relatórios Personalizados */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-950">
+              <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                <FileText size={18} className="text-emerald-500" /> Geração de Relatório Financeiro
+              </h3>
+              <button onClick={() => setShowReportModal(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+            
+            <div className="p-5 space-y-4 text-sm">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Tipo de Lançamento</label>
+                <select
+                  value={reportConfig.type}
+                  onChange={e => setReportConfig({ ...reportConfig, type: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                >
+                  <option value="ALL">Entradas e Saídas</option>
+                  <option value="INCOME">Somente Entradas</option>
+                  <option value="EXPENSE">Somente Saídas</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Forma de Pagamento</label>
+                <select
+                  value={reportConfig.paymentMethod}
+                  onChange={e => setReportConfig({ ...reportConfig, paymentMethod: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                >
+                  <option value="ALL">Todas as Formas de Pagamento</option>
+                  <option value="PIX">Pix</option>
+                  <option value="DINHEIRO">Dinheiro</option>
+                  <option value="DEBITO">Débito</option>
+                  <option value="CREDITO">Crédito</option>
+                  <option value="TRANSFERENCIA">Transferência Bancária</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Período de Seleção</label>
+                <select
+                  value={reportConfig.period}
+                  onChange={e => setReportConfig({ ...reportConfig, period: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                >
+                  <option value="WEEK">Da Semana Atual</option>
+                  <option value="MONTH">Do Mês</option>
+                  <option value="YEAR">Do Ano Completo</option>
+                  <option value="CUSTOM">Filtro por Data (Personalizado)</option>
+                </select>
+              </div>
+
+              {reportConfig.period === 'MONTH' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-slate-400">Mês</label>
+                    <select
+                      value={reportConfig.month}
+                      onChange={e => setReportConfig({ ...reportConfig, month: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                    >
+                      <option value="1">Janeiro</option>
+                      <option value="2">Fevereiro</option>
+                      <option value="3">Março</option>
+                      <option value="4">Abril</option>
+                      <option value="5">Maio</option>
+                      <option value="6">Junho</option>
+                      <option value="7">Julho</option>
+                      <option value="8">Agosto</option>
+                      <option value="9">Setembro</option>
+                      <option value="10">Outubro</option>
+                      <option value="11">Novembro</option>
+                      <option value="12">Dezembro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400">Ano</label>
+                    <select
+                      value={reportConfig.year}
+                      onChange={e => setReportConfig({ ...reportConfig, year: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {reportConfig.period === 'YEAR' && (
+                <div>
+                  <label className="text-xs text-slate-400">Ano</label>
+                  <select
+                    value={reportConfig.year}
+                    onChange={e => setReportConfig({ ...reportConfig, year: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {reportConfig.period === 'CUSTOM' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-slate-400">Data Inicial</label>
+                    <input
+                      type="date"
+                      value={reportConfig.startDate}
+                      onChange={e => setReportConfig({ ...reportConfig, startDate: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400">Data Final</label>
+                    <input
+                      type="date"
+                      value={reportConfig.endDate}
+                      onChange={e => setReportConfig({ ...reportConfig, endDate: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <p className="text-[11px] text-slate-500 font-mono mt-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+                * O relatório final gerado conterá a lista detalhada das movimentações e os totais de Entradas, Saídas e Saldo Consolidado no rodapé.
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-950">
+              <button
+                onClick={() => handleGenerateReport('PDF')}
+                disabled={loadingReport}
+                className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                <Download size={14} /> Exportar PDF
+              </button>
+              <button
+                onClick={() => handleGenerateReport('EXCEL')}
+                disabled={loadingReport}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                <Download size={14} /> Exportar Excel
               </button>
             </div>
           </div>

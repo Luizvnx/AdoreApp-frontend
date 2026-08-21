@@ -9,13 +9,15 @@ export interface Transaction {
   amount: number;
   date: string;
   category: string;
+  paymentMethod?: string;
   notes?: string;
   service?: { serviceName: string };
   createdBy?: { fullName: string };
   editedBy?: { fullName: string };
   editHistory?: {
     editedAt: string;
-    editedById: string;
+    editedById?: string;
+    editedByName?: string;
     changes: Record<string, { old: any; new: any }>;
   }[];
 }
@@ -42,7 +44,7 @@ export interface DashboardMetrics {
 
 export function useFinance() {
   const { showError, showSuccess } = useToast();
-  
+
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
@@ -60,7 +62,7 @@ export function useFinance() {
         api.get('/finance/fixed-expenses'),
       ]);
       setMetrics(metricsRes.data);
-      setRecentTransactions(transRes.data.slice(0, 10)); // Apenas as 10 mais recentes
+      setRecentTransactions(transRes.data.slice(0, 10));
       setFixedExpenses(fixedRes.data);
     } catch (error: any) {
       console.error("ERRO NO USEFINANCE:", error?.response?.data || error);
@@ -70,15 +72,19 @@ export function useFinance() {
     }
   };
 
-  const fetchFilteredTransactions = async (month: string, year: string, category: string) => {
+  const fetchFilteredTransactions = async (monthOrParams: string | object, year?: string, category?: string) => {
     try {
       setLoadingHistory(true);
-      const res = await api.get('/finance/transactions', {
-        params: { month, year, category }
-      });
+      const params = typeof monthOrParams === 'object' 
+        ? monthOrParams 
+        : { month: monthOrParams, year, category };
+        
+      const res = await api.get('/finance/transactions', { params });
       setFilteredTransactions(res.data);
+      return res.data;
     } catch (error) {
       showError('Erro ao buscar histórico de transações.');
+      return [];
     } finally {
       setLoadingHistory(false);
     }

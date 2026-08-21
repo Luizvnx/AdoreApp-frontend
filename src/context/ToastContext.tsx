@@ -44,21 +44,20 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`flex items-center gap-3 px-4 py-3 rounded-full shadow-xl pointer-events-auto transition-all animate-in fade-in slide-in-from-bottom-5 duration-300 ${
-              toast.type === 'success' 
+            className={`flex items-center gap-3 px-4 py-3 rounded-full shadow-xl pointer-events-auto transition-all animate-in fade-in slide-in-from-bottom-5 duration-300 ${toast.type === 'success'
                 ? 'bg-emerald-500 text-white' // Bolha verde elegante para sucesso
                 : 'bg-red-600 text-white' // Pop-up simples vermelho para erro
-            }`}
+              }`}
           >
             {toast.type === 'success' ? (
               <CheckCircle className="w-5 h-5 flex-shrink-0" />
             ) : (
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
             )}
-            
+
             <span className="text-sm font-medium whitespace-nowrap">{toast.message}</span>
-            
-            <button 
+
+            <button
               onClick={() => removeToast(toast.id)}
               className="ml-2 hover:bg-white/20 rounded-full p-1 transition-colors"
             >

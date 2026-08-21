@@ -1,13 +1,15 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck } from 'lucide-react';
+import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
+import { useCongregation } from '../../context/CongregationContext';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { congregations, selectedCongregationId, setSelectedCongregationId, currentCongregationName } = useCongregation();
 
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
@@ -35,7 +37,14 @@ export const AppLayout: React.FC = () => {
       label: UI_MESSAGES.LABELS.NAV_GESTAO,
       icon: <ShieldCheck size={20} />,
       path: '/gestao',
-      show: isSuperAdmin, // Apenas Pastor/SuperAdmin
+      show: isSuperAdmin,
+    },
+    {
+      id: 'congregations',
+      label: 'Filiais',
+      icon: <Building2 size={20} />,
+      path: '/congregacoes',
+      show: isSuperAdmin,
     },
     {
       id: 'visitors',
@@ -90,8 +99,8 @@ export const AppLayout: React.FC = () => {
               key={item.id}
               onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home')
-                  ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
-                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
+                : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
             >
               {item.icon}
@@ -102,8 +111,43 @@ export const AppLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0 relative">
-        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0 relative flex flex-col">
+        {/* Barra Superior Elegante com Seletor de Congregação */}
+        <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20">
+              <Building size={18} />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block leading-none mb-0.5">
+                Congregação Ativa
+              </span>
+              <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                {currentCongregationName}
+              </span>
+            </div>
+          </div>
+
+          {isSuperAdmin && (
+            <div className="flex items-center gap-2">
+              <Building2 size={16} className="text-slate-400 hidden sm:block" />
+              <select
+                value={selectedCongregationId}
+                onChange={(e) => setSelectedCongregationId(e.target.value)}
+                className="bg-slate-950 border border-slate-800 text-cyan-400 font-semibold px-3.5 py-1.5 rounded-xl text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer shadow-inner"
+              >
+                <option value="ALL">Visão Global (Sede + Filiais)</option>
+                {congregations.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.isHeadquarter ? '(Sede Principal)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </header>
+
+        <div className="flex-1">
           <Outlet />
         </div>
       </main>

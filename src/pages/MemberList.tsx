@@ -69,8 +69,8 @@ export default function MemberList() {
                             const gcName = member.connectionGroup?.name;
 
                             return (
-                                <div 
-                                    key={member.id} 
+                                <div
+                                    key={member.id}
                                     onClick={() => navigate(`/membros/${member.id}`)}
                                     className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer transition-all group"
                                 >
@@ -104,7 +104,7 @@ export default function MemberList() {
                                         <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-800/60">
                                             <Briefcase size={12} className="text-cyan-400 shrink-0" />
                                             {ministriesList.map((m, idx) => (
-                                                <span 
+                                                <span
                                                     key={idx}
                                                     className="bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-[10px] font-medium px-2 py-0.5 rounded-md"
                                                 >

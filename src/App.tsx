@@ -22,33 +22,38 @@ import MembersHub from './pages/hubs/MembersHub';
 import ChurchHub from './pages/hubs/ChurchHub';
 import PastorDashboard from './pages/PastorDashboard';
 
+import { CongregationProvider } from './context/CongregationContext';
+import CongregationManagement from './pages/CongregationManagement';
+
 const App: React.FC = () => {
     return (
         <ToastProvider>
             <AuthProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route
-                            path="/"
-                            element={
-                                <PublicOnlyRoute>
-                                    <Login />
-                                </PublicOnlyRoute>
-                            }
-                        />
+                <CongregationProvider>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route
+                                path="/"
+                                element={
+                                    <PublicOnlyRoute>
+                                        <Login />
+                                    </PublicOnlyRoute>
+                                }
+                            />
 
-                        {/* Rotas abraçadas pelo AppLayout */}
-                        <Route element={<AppLayout />}>
-                            {/* Rotas protegidas gerais */}
-                            <Route element={<ProtectedRoute />}>
-                                <Route path="/dashboard" element={<Dashboard />} />
-                                <Route path="/perfil" element={<UserProfile />} />
-                            </Route>
+                            {/* Rotas abraçadas pelo AppLayout */}
+                            <Route element={<AppLayout />}>
+                                {/* Rotas protegidas gerais */}
+                                <Route element={<ProtectedRoute />}>
+                                    <Route path="/dashboard" element={<Dashboard />} />
+                                    <Route path="/perfil" element={<UserProfile />} />
+                                </Route>
 
-                            {/* Pastor Dashboard */}
-                            <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
-                                <Route path="/gestao" element={<PastorDashboard />} />
-                            </Route>
+                                {/* Pastor Dashboard & Gestão de Congregações */}
+                                <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
+                                    <Route path="/gestao" element={<PastorDashboard />} />
+                                    <Route path="/congregacoes" element={<CongregationManagement />} />
+                                </Route>
 
                             {/* Hubs Intermediários */}
                             <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
@@ -97,8 +102,9 @@ const App: React.FC = () => {
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </BrowserRouter>
-            </AuthProvider>
-        </ToastProvider>
+            </CongregationProvider>
+        </AuthProvider>
+    </ToastProvider>
     );
 };
 

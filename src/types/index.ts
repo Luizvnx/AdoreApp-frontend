@@ -36,6 +36,8 @@ export interface User {
     email?: string;
     role: UserRole;
     roles?: string[];
+    congregationId?: string | null;
+    congregation?: { id: string; name: string; isHeadquarter: boolean } | null;
     connectionGroupId?: string | null;
     connectionGroup?: ConnectionGroupInfo | null;
     memberProfile?: MemberProfileInfo | null;

@@ -128,8 +128,8 @@ export default function ServiceMetrics() {
           <button
             onClick={() => setActiveTab('metrics')}
             className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${activeTab === 'metrics'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
+              : 'text-slate-400 hover:text-slate-200'
               }`}
           >
             <TrendingUp size={16} />
@@ -139,8 +139,8 @@ export default function ServiceMetrics() {
           <button
             onClick={() => setActiveTab('register')}
             className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation ${activeTab === 'register'
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
-                : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/20'
+              : 'text-slate-400 hover:text-slate-200'
               }`}
           >
             <Plus size={16} />
@@ -286,8 +286,8 @@ export default function ServiceMetrics() {
                       <div className="w-full max-w-[28px] bg-slate-950 rounded-t-lg h-full flex items-end p-0.5 border border-slate-800">
                         <div
                           className={`w-full rounded-t-md transition-all duration-700 ${item.count > 0
-                              ? 'bg-gradient-to-t from-cyan-600 to-cyan-400'
-                              : 'bg-slate-800/30'
+                            ? 'bg-gradient-to-t from-cyan-600 to-cyan-400'
+                            : 'bg-slate-800/30'
                             }`}
                           style={{ height: `${Math.max(heightPercent, 4)}%` }}
                         />

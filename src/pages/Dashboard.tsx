@@ -6,10 +6,13 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
+import { useCongregation } from '../context/CongregationContext';
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
+  const { selectedCongregationId } = useCongregation();
 
   const [visitorCount, setVisitorCount] = useState<number | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
@@ -34,24 +37,24 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    
+
     setLoadingMetrics(true);
-    
+
     const fetchPromises = [];
 
     if (canSeeVisitors) {
       fetchPromises.push(
-        api.get('/visitors')
+        api.get(`/visitors?congregationId=${selectedCongregationId}`)
           .then(res => setVisitorCount(res.data.length))
           .catch(err => {
             if (err.response?.status !== 401) showError('Erro ao buscar visitantes.');
           })
       );
     }
-    
+
     if (canSeeMembers) {
       fetchPromises.push(
-        api.get('/members')
+        api.get(`/members?congregationId=${selectedCongregationId}`)
           .then(res => setMemberCount(res.data.length))
           .catch(err => {
             if (err.response?.status !== 401) showError('Erro ao buscar membros.');
@@ -60,11 +63,11 @@ export default function Dashboard() {
     }
 
     Promise.all(fetchPromises).finally(() => setLoadingMetrics(false));
-  }, [canSeeVisitors, canSeeMembers, user, showError]);
+  }, [canSeeVisitors, canSeeMembers, user, selectedCongregationId, showError]);
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
-      
+
       {/* Welcome Banner */}
       <section className="bg-gradient-to-r from-cyan-900/40 to-slate-900 border border-slate-800/60 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
         <div className="absolute -right-10 -top-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"></div>

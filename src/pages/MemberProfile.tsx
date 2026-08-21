@@ -70,7 +70,7 @@ export default function MemberProfile() {
     const [birthDate, setBirthDate] = useState('');
     const [joinDate, setJoinDate] = useState('');
     const [baptismDate, setBaptismDate] = useState('');
-    
+
     // Cargos / Ministérios
     const [selectedMinistries, setSelectedMinistries] = useState<string[]>([]);
     const [availableMinistries, setAvailableMinistries] = useState<MinistryItem[]>([]);
@@ -88,7 +88,7 @@ export default function MemberProfile() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            
+
             // Buscar lista de cargos disponíveis
             try {
                 const minRes = await api.get('/ministries');
@@ -108,7 +108,7 @@ export default function MemberProfile() {
             // Buscar dados do membro
             const response = await api.get('/members');
             const found = response.data.find((m: Member) => m.id === id);
-            
+
             if (found) {
                 setMember(found);
                 setFullName(found.fullName);
@@ -148,7 +148,7 @@ export default function MemberProfile() {
     };
 
     const toggleMinistry = (name: string) => {
-        setSelectedMinistries(prev => 
+        setSelectedMinistries(prev =>
             prev.includes(name) ? prev.filter(m => m !== name) : [...prev, name]
         );
     };
@@ -170,7 +170,7 @@ export default function MemberProfile() {
                 connectionGroupId: connectionGroupId || null,
                 roles: selectedRoles
             });
-            
+
             showSuccess(UI_MESSAGES.SUCCESS.PROFILE_UPDATED);
             navigate('/membros');
         } catch (error) {
@@ -229,15 +229,13 @@ export default function MemberProfile() {
                                         <div
                                             key={role}
                                             onClick={() => toggleSystemRole(role)}
-                                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${
-                                                isSelected
+                                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 ${isSelected
                                                     ? 'bg-cyan-500/10 border-cyan-500/50 text-white'
                                                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 text-slate-400'
-                                            }`}
+                                                }`}
                                         >
-                                            <div className={`w-4 h-4 rounded-md mt-0.5 flex items-center justify-center border transition-all ${
-                                                isSelected ? 'bg-cyan-500 border-cyan-400 text-slate-950 font-bold' : 'border-slate-700 bg-slate-900'
-                                            }`}>
+                                            <div className={`w-4 h-4 rounded-md mt-0.5 flex items-center justify-center border transition-all ${isSelected ? 'bg-cyan-500 border-cyan-400 text-slate-950 font-bold' : 'border-slate-700 bg-slate-900'
+                                                }`}>
                                                 {isSelected && <Check size={12} strokeWidth={3} />}
                                             </div>
                                             <div>
@@ -257,7 +255,7 @@ export default function MemberProfile() {
                             <User size={16} className="text-blue-500" />
                             Dados Pessoais
                         </h3>
-                        
+
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-400">Nome Completo</label>
                             <input
@@ -268,7 +266,7 @@ export default function MemberProfile() {
                                 required
                             />
                         </div>
-                        
+
                         <div className="space-y-2">
                             <label className="text-xs font-semibold text-slate-400">E-mail (Leitura)</label>
                             <input
@@ -312,7 +310,7 @@ export default function MemberProfile() {
                             <MapPin size={16} className="text-blue-500" />
                             Localização
                         </h3>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-400">CEP</label>
@@ -353,7 +351,7 @@ export default function MemberProfile() {
                             <Calendar size={16} className="text-blue-500" />
                             Dados Eclesiásticos
                         </h3>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <label className="text-xs font-semibold text-slate-400">Ingresso na Igreja</label>
@@ -435,18 +433,16 @@ export default function MemberProfile() {
                                             key={name}
                                             type="button"
                                             onClick={() => toggleMinistry(name)}
-                                            className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-all active:scale-95 ${
-                                                isSelected
+                                            className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-1.5 transition-all active:scale-95 ${isSelected
                                                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/60 shadow-[0_0_12px_rgba(59,130,246,0.2)]'
                                                     : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
-                                            }`}
+                                                }`}
                                         >
                                             <div
-                                                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${
-                                                    isSelected
+                                                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border transition-all ${isSelected
                                                         ? 'bg-blue-500 border-blue-400 text-white'
                                                         : 'border-slate-700 bg-slate-900'
-                                                }`}
+                                                    }`}
                                             >
                                                 {isSelected && <Check size={10} strokeWidth={3} />}
                                             </div>

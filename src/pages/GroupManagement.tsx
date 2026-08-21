@@ -221,7 +221,7 @@ export default function GroupManagement() {
                       <h4 className="font-semibold text-sm text-white group-hover:text-cyan-400 transition-colors flex items-center gap-2">
                         GC {item.name}
                       </h4>
-                      
+
                       <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
                         {item.neighborhood && (
                           <span className="flex items-center gap-1">
