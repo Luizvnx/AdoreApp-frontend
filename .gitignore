@@ -34,3 +34,6 @@ pnpm-debug.log*
 *.swo
 .DS_Store
 Thumbs.db
+
+# Documentation & Internal Notes
+*.txt
