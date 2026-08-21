@@ -1,26 +1,44 @@
-src/
-├── App.tsx            # Onde ficará a configuração das rotas
-├── main.tsx           # Ponto de entrada padrão do Vite
-└── pages/             # Nossas telas isoladas
-    ├── Login.tsx      # O componente da tela de login
-    └── Dashboard.tsx  # O componente da tela inicial
-├── config/                 # Configurações de Banco de dados, variáveis de ambiente, JWT
-├── shared/                 # Código compartilhado entre toda a aplicação
-│   ├── middlewares/        # Middlewares (ex: verificação de token, bloqueio por Role)
-│   ├── errors/             # Tratamento global de erros
-│   └── utils/              # Funções utilitárias
-└── modules/                # Módulos principais do sistema
-    ├── auth/               # Responsável apenas pelo Login e geração de Tokens
-    │   ├── controllers/
-    │   ├── services/
-    │   └── dtos/
-    ├── users/              # Gestão de Membros, Pastores e Líderes
-    │   ├── entities/       # Modelos de banco de dados (User, Roles)
-    │   ├── repositories/
-    │   ├── services/
-    │   └── controllers/
-    └── visitors/           # Gestão do Cadastro de Visitantes
-        ├── entities/       # Modelo do Visitante
-        ├── repositories/
-        ├── services/
-        └── controllers/
+d:/projetos/AdorehApp/AdoreApp-frontend/src/
+├── App.tsx                        # Rotas protegidas (ProtectedRoute) e CongregationProvider
+├── main.tsx                       # Ponto de entrada Vite (React DOM)
+├── index.css                      # TailwindCSS e definições de estilos globais
+│
+├── context/                       # Gerenciamento de Estado Global
+│   ├── AuthContext.tsx            # Autenticação, sessão via Cookie HttpOnly / JWT e perfis
+│   ├── CongregationContext.tsx    # Estado global da Congregação/Filial selecionada no topo
+│   └── ToastContext.tsx           # Notificações estilo toast (sucesso e erro)
+│
+├── components/                    # Componentes Reutilizáveis
+│   ├── layout/
+│   │   └── AppLayout.tsx          # Layout principal (Sidebar + Header com Seletor Global de Filiais)
+│   ├── ui/
+│   │   ├── Icon.tsx               # Ícones auxiliares
+│   │   └── Skeleton.tsx           # Skeletons de carregamento de tabelas e cards
+│   └── ProtectedRoute.tsx         # Middleware de rotas protegidas por UserRole
+│
+├── pages/                         # Telas Principais da Aplicação
+│   ├── Login.tsx                  # Autenticação de Usuários
+│   ├── Dashboard.tsx              # Visão Geral da Igreja selecionada
+│   ├── PastorDashboard.tsx        # Visão Pastoral Executiva (Gráficos de 6 meses, Balanço por Filiais)
+│   ├── CongregationManagement.tsx # Gestão de Congregações (Sede e Filiais)
+│   ├── VisitorRegistration.tsx    # Formulário de Cadastro de Visitantes
+│   ├── VisitorList.tsx            # Lista de Visitantes com Conversão em Membro
+│   ├── MemberList.tsx             # Lista de Membros da Igreja
+│   ├── MemberProfile.tsx          # Ficha Detalhada e Edição de Membro
+│   ├── GroupManagement.tsx        # Gestão dos Grupos de Conexão (GCs / Células)
+│   ├── MinistryManagement.tsx     # Cargos e Ministérios
+│   ├── ServiceMetrics.tsx         # Contagem de Presença e Métricas dos Cultos
+│   ├── FinanceDashboard.tsx       # Tesouraria (Pix/Dinheiro/Cartão, Edições, PDF e Excel)
+│   ├── UserProfile.tsx            # Perfil do Usuário Logado
+│   └── hubs/                      # Hubs de Navegação Rápida
+│       ├── VisitorsHub.tsx
+│       ├── MembersHub.tsx
+│       └── ChurchHub.tsx
+│
+├── services/
+│   └── api.ts                     # Instância Axios com credentials: true
+├── utils/
+│   ├── reportUtils.ts             # Exportação de relatórios PDF (jspdf) e Excel (xlsx)
+│   └── messageHandler.ts          # Tratador de mensagens da API
+└── types/
+    └── index.ts                   # Interfaces TypeScript (User, Congregation, Transaction, etc.)
