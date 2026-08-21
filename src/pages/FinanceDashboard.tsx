@@ -210,22 +210,22 @@ export default function FinanceDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans pb-24 relative overflow-x-hidden pt-safe pb-safe">
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
-            <ArrowLeft size={24} />
+    <div className="min-h-screen bg-slate-950 text-white font-sans pb-24 relative overflow-x-hidden">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-1.5 shrink-0">
+            <ArrowLeft size={22} />
           </button>
-          <div>
-            <h1 className="text-lg font-bold text-white flex items-center gap-2">
-              <Wallet size={20} className="text-emerald-500" /> Tesouraria
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 truncate">
+              <Wallet size={18} className="text-emerald-500 shrink-0" /> Tesouraria
             </h1>
-            <p className="text-xs text-emerald-400">Visão Geral - {metrics?.period}</p>
+            <p className="text-xs text-emerald-400 truncate">Visão Geral - {metrics?.period}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => setShowReportModal(true)} title="Gerar Relatório Financeiro" className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow">
-            <FileText size={16} /> Relatórios
+            <FileText size={16} /> <span className="hidden xs:inline">Relatórios</span>
           </button>
           <button onClick={fetchData} title="Atualizar Dados" className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full ml-1">
             <RefreshCw size={16} />
@@ -236,37 +236,50 @@ export default function FinanceDashboard() {
       <main className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-emerald-400 mb-2">
-              <TrendingUp size={16} />
-              <span className="text-xs font-semibold uppercase tracking-wider">Entradas (Mês)</span>
+            <div className="flex items-center gap-1.5 text-emerald-400 mb-2">
+              <TrendingUp size={16} className="shrink-0" />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Entradas (Mês)</span>
             </div>
-            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.totalIncome || 0)}</p>
+            <p className="text-base sm:text-lg md:text-xl font-extrabold text-white whitespace-nowrap truncate" title={formatCurrency(metrics?.totalIncome || 0)}>
+              {formatCurrency(metrics?.totalIncome || 0)}
+            </p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-red-400 mb-2">
-              <TrendingDown size={16} />
-              <span className="text-xs font-semibold uppercase tracking-wider">Saídas (Mês)</span>
+            <div className="flex items-center gap-1.5 text-red-400 mb-2">
+              <TrendingDown size={16} className="shrink-0" />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Saídas (Mês)</span>
             </div>
-            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.totalExpense || 0)}</p>
+            <p className="text-base sm:text-lg md:text-xl font-extrabold text-white whitespace-nowrap truncate" title={formatCurrency(metrics?.totalExpense || 0)}>
+              {formatCurrency(metrics?.totalExpense || 0)}
+            </p>
           </div>
 
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-            <div className="flex items-center gap-2 text-amber-400 mb-2">
-              <CalendarDays size={16} />
-              <span className="text-xs font-semibold uppercase tracking-wider">Gastos Fixos Proj.</span>
+            <div className="flex items-center gap-1.5 text-amber-400 mb-2">
+              <CalendarDays size={16} className="shrink-0" />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Gastos Fixos Proj.</span>
             </div>
-            <p className="text-xl font-bold text-white">{formatCurrency(metrics?.projectedFixedExpenses || 0)}</p>
+            <p className="text-base sm:text-lg md:text-xl font-extrabold text-white whitespace-nowrap truncate" title={formatCurrency(metrics?.projectedFixedExpenses || 0)}>
+              {formatCurrency(metrics?.projectedFixedExpenses || 0)}
+            </p>
           </div>
 
-          <div className="bg-gradient-to-br from-emerald-600 to-emerald-900 border border-emerald-500/50 rounded-2xl p-4 flex flex-col justify-between shadow-lg shadow-emerald-500/20">
+          <div className="col-span-2 sm:col-span-1 bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 border border-emerald-500/50 rounded-2xl p-4 flex flex-col justify-between shadow-lg shadow-emerald-500/20">
             <div className="flex items-center gap-2 text-emerald-100 mb-2">
-              <DollarSign size={16} />
-              <span className="text-xs font-semibold uppercase tracking-wider">Saldo Geral Caixa</span>
+              <DollarSign size={16} className="shrink-0" />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider truncate">Saldo Geral Caixa</span>
             </div>
-            <p className="text-2xl font-bold text-white">{formatCurrency(metrics?.currentBalance || 0)}</p>
+            <p 
+              className={`text-lg sm:text-xl md:text-2xl font-black tracking-tight whitespace-nowrap truncate ${
+                (metrics?.currentBalance || 0) < 0 ? 'text-red-300' : 'text-white'
+              }`}
+              title={formatCurrency(metrics?.currentBalance || 0)}
+            >
+              {formatCurrency(metrics?.currentBalance || 0)}
+            </p>
           </div>
         </div>
 

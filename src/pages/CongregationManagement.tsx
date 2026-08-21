@@ -100,7 +100,7 @@ export default function CongregationManagement() {
   const totalVisitorsCount = congregations.reduce((acc, c) => acc + (c._count?.visitors || 0), 0);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
+    <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full animate-in fade-in zoom-in-95 duration-500">
       
       {/* Cabeçalho Principal */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-6 rounded-sm border border-slate-700">
@@ -125,23 +125,23 @@ export default function CongregationManagement() {
 
       {/* Cards de Métricas e Resumo */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center gap-4">
-          <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
-            <Building2 size={24} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center gap-3.5 min-w-0">
+          <div className="p-2.5 sm:p-3 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20 shrink-0">
+            <Building2 size={22} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <span className="text-xs text-slate-400 font-medium block">Total de Igrejas</span>
-            <span className="text-2xl font-black text-white">{congregations.length}</span>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs text-slate-400 font-medium block truncate">Total de Igrejas</span>
+            <span className="text-xl sm:text-2xl font-black text-white">{congregations.length}</span>
           </div>
         </div>
 
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center gap-4">
-          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-            <ShieldCheck size={24} />
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl flex items-center gap-3.5 min-w-0">
+          <div className="p-2.5 sm:p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 shrink-0">
+            <ShieldCheck size={22} className="sm:w-6 sm:h-6" />
           </div>
-          <div>
-            <span className="text-xs text-slate-400 font-medium block">Sede Principal</span>
-            <span className="text-sm font-bold text-amber-400 truncate max-w-[140px] block">
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] sm:text-xs text-slate-400 font-medium block truncate">Sede Principal</span>
+            <span className="text-xs sm:text-sm font-bold text-amber-400 truncate block" title={headquarter?.name || 'Sede Central'}>
               {headquarter?.name || 'Sede Central'}
             </span>
           </div>

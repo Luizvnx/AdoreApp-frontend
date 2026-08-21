@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2 } from 'lucide-react';
+import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2, MoreHorizontal, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 import { useCongregation } from '../../context/CongregationContext';
@@ -10,6 +10,7 @@ export const AppLayout: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { congregations, selectedCongregationId, setSelectedCongregationId, currentCongregationName } = useCongregation();
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
@@ -83,6 +84,13 @@ export const AppLayout: React.FC = () => {
     }
   ].filter(item => item.show);
 
+  // Seleção de itens exibidos na barra inferior mobile (Máximo 4 + Botão "Mais")
+  const useMoreDrawer = navItems.length > 5;
+  const mainMobileItems = useMoreDrawer ? navItems.slice(0, 4) : navItems;
+  const isAnyDrawerItemActive = useMoreDrawer && navItems.slice(4).some(
+    item => location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home')
+  );
+
   return (
     <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar (Desktop) */}
@@ -113,33 +121,33 @@ export const AppLayout: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0 relative flex flex-col">
         {/* Barra Superior Elegante com Seletor de Congregação */}
-        <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20">
-              <Building size={18} />
+        <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 py-2 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
+            <div className="p-1 sm:p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20 shrink-0">
+              <Building size={14} className="sm:w-4 sm:h-4" />
             </div>
-            <div>
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium block leading-none mb-0.5">
+            <div className="min-w-0">
+              <span className="text-[9px] sm:text-[10px] text-slate-400 uppercase tracking-wider font-medium block leading-none mb-0.5 whitespace-nowrap">
                 Congregação Ativa
               </span>
-              <span className="text-xs sm:text-sm font-bold text-white tracking-tight">
+              <span className="text-[11px] sm:text-sm font-bold text-white tracking-tight block truncate max-w-[110px] xs:max-w-[150px] sm:max-w-none">
                 {currentCongregationName}
               </span>
             </div>
           </div>
 
           {isSuperAdmin && (
-            <div className="flex items-center gap-2">
-              <Building2 size={16} className="text-slate-400 hidden sm:block" />
+            <div className="flex items-center gap-1 shrink-0 ml-1.5">
+              <Building2 size={14} className="text-slate-400 hidden sm:block shrink-0" />
               <select
                 value={selectedCongregationId}
                 onChange={(e) => setSelectedCongregationId(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-cyan-400 font-semibold px-3.5 py-1.5 rounded-xl text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer shadow-inner"
+                className="bg-slate-950 border border-slate-800 text-cyan-400 font-semibold px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer shadow-inner max-w-[115px] xs:max-w-[145px] sm:max-w-[220px] truncate"
               >
-                <option value="ALL">Visão Global (Sede + Filiais)</option>
+                <option value="ALL">Visão Global</option>
                 {congregations.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} {c.isHeadquarter ? '(Sede Principal)' : ''}
+                    {c.name} {c.isHeadquarter ? '(Sede)' : ''}
                   </option>
                 ))}
               </select>
@@ -153,32 +161,98 @@ export const AppLayout: React.FC = () => {
       </main>
 
       {/* Bottom Nav (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 pb-safe z-50">
-        {/* Usamos overflow-x-auto com hide-scrollbar para caber mais ícones deslizando */}
-        <div className="flex items-center px-2 py-2 overflow-x-auto no-scrollbar justify-start sm:justify-around space-x-2">
-          {navItems.map(item => {
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 pb-safe z-40">
+        <div className={`grid ${useMoreDrawer ? 'grid-cols-5' : `grid-cols-${navItems.length}`} items-center px-1 py-1.5`}>
+          {mainMobileItems.map(item => {
             const isActive = location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home');
             return (
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`flex-shrink-0 flex flex-col items-center justify-center w-[72px] p-2 rounded-xl transition-all duration-300 relative ${isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
-                  }`}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${
+                  isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                }`}
               >
-                <div className={`transition-transform duration-300 ${isActive ? '-translate-y-1' : ''}`}>
+                <div className={`transition-transform duration-300 ${isActive ? '-translate-y-0.5' : ''}`}>
                   {item.icon}
                 </div>
                 <span className="text-[10px] mt-1 font-medium tracking-wide truncate w-full text-center">
                   {item.label}
                 </span>
                 {isActive && (
-                  <div className="absolute bottom-1 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                  <div className="absolute bottom-0.5 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
                 )}
               </button>
             );
           })}
+
+          {useMoreDrawer && (
+            <button
+              onClick={() => setShowMoreMenu(true)}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${
+                isAnyDrawerItemActive || showMoreMenu ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              <div className={`transition-transform duration-300 ${isAnyDrawerItemActive ? '-translate-y-0.5' : ''}`}>
+                <MoreHorizontal size={20} />
+              </div>
+              <span className="text-[10px] mt-1 font-medium tracking-wide truncate w-full text-center">
+                Mais
+              </span>
+              {isAnyDrawerItemActive && (
+                <div className="absolute bottom-0.5 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+              )}
+            </button>
+          )}
         </div>
       </nav>
+
+      {/* Drawer Bottom Sheet "Mais" para Mobile */}
+      {showMoreMenu && (
+        <div 
+          className="md:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end"
+          onClick={() => setShowMoreMenu(false)}
+        >
+          <div 
+            className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <MoreHorizontal size={18} className="text-cyan-400" /> Menu de Navegação
+              </h3>
+              <button onClick={() => setShowMoreMenu(false)} className="text-slate-400 hover:text-white p-1">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
+              {navItems.map(item => {
+                const isActive = location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home');
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setShowMoreMenu(false);
+                      navigate(item.path);
+                    }}
+                    className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                      isActive
+                        ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 font-bold'
+                        : 'bg-slate-950/60 border-slate-800/80 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl ${isActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-900 text-slate-400'}`}>
+                      {item.icon}
+                    </div>
+                    <span className="text-xs font-semibold">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
