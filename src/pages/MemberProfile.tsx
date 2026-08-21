@@ -336,8 +336,8 @@ export default function MemberProfile() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2 min-w-0">
                                 <label className="text-xs font-semibold text-slate-400 flex items-center gap-1">
                                     <Phone size={14} /> Telefone
                                 </label>
@@ -346,10 +346,10 @@ export default function MemberProfile() {
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     placeholder="(99) 99999-9999"
-                                    className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
+                                    className="w-full max-w-full min-w-0 bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 min-w-0">
                                 <label className="text-xs font-semibold text-slate-400 flex items-center gap-1">
                                     <Calendar size={14} /> Data Nasc.
                                 </label>
@@ -357,7 +357,7 @@ export default function MemberProfile() {
                                     type="date"
                                     value={birthDate}
                                     onChange={(e) => setBirthDate(e.target.value)}
-                                    className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
+                                    className="w-full max-w-full min-w-0 bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>
                         </div>
@@ -387,6 +387,7 @@ export default function MemberProfile() {
                                     type="text"
                                     value={neighborhood}
                                     onChange={(e) => setNeighborhood(e.target.value)}
+                                    placeholder="Nome do Bairro"
                                     className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>
@@ -411,23 +412,23 @@ export default function MemberProfile() {
                             Dados Eclesiásticos
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2 min-w-0">
                                 <label className="text-xs font-semibold text-slate-400">Ingresso na Igreja</label>
                                 <input
                                     type="date"
                                     value={joinDate}
                                     onChange={(e) => setJoinDate(e.target.value)}
-                                    className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
+                                    className="w-full max-w-full min-w-0 bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 min-w-0">
                                 <label className="text-xs font-semibold text-slate-400">Data de Batismo</label>
                                 <input
                                     type="date"
                                     value={baptismDate}
                                     onChange={(e) => setBaptismDate(e.target.value)}
-                                    className="w-full bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
+                                    className="w-full max-w-full min-w-0 bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>
                         </div>

@@ -158,19 +158,19 @@ export default function UserProfile() {
                             <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white focus:border-cyan-500 outline-none transition-colors" />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs text-slate-400 uppercase tracking-wider">Nascimento</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="min-w-0">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider block">Nascimento</label>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
+                                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 pointer-events-none">
                                         <Calendar size={16} />
                                     </span>
-                                    <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-slate-300 focus:border-cyan-500 outline-none transition-colors" />
+                                    <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-slate-300 focus:border-cyan-500 outline-none transition-colors" />
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-400 uppercase tracking-wider">Estado Civil</label>
-                                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 focus:border-cyan-500 outline-none appearance-none transition-colors">
+                            <div className="min-w-0">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider block">Estado Civil</label>
+                                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 focus:border-cyan-500 outline-none appearance-none transition-colors cursor-pointer">
                                     <option value="">Selecione</option>
                                     <option value="SOLTEIRO">Solteiro(a)</option>
                                     <option value="CASADO">Casado(a)</option>

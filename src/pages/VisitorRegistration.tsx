@@ -86,14 +86,14 @@ export default function VisitorRegistration() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs text-slate-400 uppercase tracking-wider">Nascimento</label>
-                                <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 outline-none" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="min-w-0">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider block">Nascimento</label>
+                                <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 outline-none" />
                             </div>
-                            <div>
-                                <label className="text-xs text-slate-400 uppercase tracking-wider">Estado Civil</label>
-                                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 outline-none">
+                            <div className="min-w-0">
+                                <label className="text-xs text-slate-400 uppercase tracking-wider block">Estado Civil</label>
+                                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="w-full max-w-full min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-slate-300 outline-none cursor-pointer">
                                     <option value="SOLTEIRO">Solteiro(a)</option>
                                     <option value="CASADO">Casado(a)</option>
                                     <option value="DIVORCIADO">Divorciado(a)</option>
