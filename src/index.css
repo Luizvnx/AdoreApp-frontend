@@ -1,4 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --radius-3xl: 4px;
+  --radius-2xl: 4px;
+  --radius-xl: 4px;
+  --radius-lg: 4px;
+  --radius-md: 4px;
+  --radius-sm: 2px;
+}
 
 /* Trava de transbordamento horizontal e otimização de toque mobile */
 html,

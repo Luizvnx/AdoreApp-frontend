@@ -90,10 +90,9 @@ export default function PastorDashboard() {
     <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
 
       {/* Cabeçalho Principal */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 p-6 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 p-6 rounded-sm border border-slate-700">
         <div className="relative z-10">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-yellow-300 flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-amber-500 flex items-center gap-3">
             <ShieldCheck className="text-amber-500" size={32} />
             Visão Pastoral Executiva
           </h1>
@@ -204,7 +203,7 @@ export default function PastorDashboard() {
       {/* GRÁFICO VISUAL: EVOLUÇÃO FINANCEIRA 6 MESES & ESTRUTURA DE GASTOS */}
       {finance?.monthlyHistory && finance.monthlyHistory.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          
+
           {/* Gráfico de Barras de Entradas x Saídas */}
           <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between">

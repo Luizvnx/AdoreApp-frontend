@@ -69,18 +69,17 @@ export default function Dashboard() {
     <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
 
       {/* Welcome Banner */}
-      <section className="bg-gradient-to-r from-cyan-900/40 to-slate-900 border border-slate-800/60 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"></div>
-        <div className="relative z-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-1">
+      <header className="bg-slate-900 border border-slate-700 p-6 rounded-sm">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-cyan-400 mb-1">
             Olá, {currentUser.name.split(' ')[0]} 👋
-          </h2>
-          <p className="text-sm text-cyan-400 font-medium mb-4">{currentUser.role.replace('_', ' ')}</p>
+          </h1>
+          <p className="text-sm text-cyan-400 font-medium mb-3">{currentUser.role.replace('_', ' ')}</p>
           <p className="text-slate-400 text-sm max-w-md leading-relaxed">
-            Bem-vindo ao AvivaApp. Acesse rapidamente os dados mais importantes da igreja logo abaixo, ou use o menu de navegação.
+            Bem-vindo ao AdorehApp. Acesse rapidamente os dados mais importantes da igreja logo abaixo, ou use o menu de navegação.
           </p>
         </div>
-      </section>
+      </header>
 
       {/* Métricas Resumidas */}
       {(canSeeVisitors || canSeeMembers) && (

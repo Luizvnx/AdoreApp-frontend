@@ -109,7 +109,7 @@ export default function GroupManagement() {
 
       <main className="p-4 sm:p-6 max-w-lg mx-auto w-full space-y-6">
         {/* Banner Informativo */}
-        <div className="bg-gradient-to-r from-cyan-950/40 to-slate-900 border border-cyan-500/30 rounded-2xl p-4 flex items-start gap-3 shadow-lg">
+        <div className="bg-slate-900 border border-slate-700 rounded-sm p-4 flex items-start gap-3">
           <div className="bg-cyan-500/20 text-cyan-400 p-2 rounded-xl shrink-0 mt-0.5">
             <Sparkles size={18} />
           </div>

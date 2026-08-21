@@ -103,10 +103,9 @@ export default function CongregationManagement() {
     <div className="p-4 sm:p-6 space-y-6 max-w-6xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
       
       {/* Cabeçalho Principal */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/40 p-6 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 flex items-center gap-3">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-6 rounded-sm border border-slate-700">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-cyan-400 flex items-center gap-3">
             <Building2 className="text-cyan-400" size={32} />
             Gestão de Congregações
           </h1>
@@ -117,9 +116,9 @@ export default function CongregationManagement() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="relative z-10 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-cyan-500/20 px-5 py-3 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer self-start sm:self-auto"
+          className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-sm px-5 py-3 rounded-sm shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer active:scale-95 self-start sm:self-auto"
         >
-          <Plus size={20} />
+          <Plus size={18} />
           <span>Cadastrar Filial</span>
         </button>
       </header>
