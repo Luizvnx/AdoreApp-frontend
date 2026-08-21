@@ -13,6 +13,11 @@ interface Member {
     fullName: string;
     email: string;
     roles: string[];
+    congregationId?: string | null;
+    congregation?: {
+        id: string;
+        name: string;
+    } | null;
     connectionGroupId?: string | null;
     connectionGroup?: {
         id: string;
@@ -77,9 +82,11 @@ export default function MemberProfile() {
     const [selectedMinistries, setSelectedMinistries] = useState<string[]>([]);
     const [availableMinistries, setAvailableMinistries] = useState<MinistryItem[]>([]);
 
-    // Grupos de Conexão (GCs)
+    // Grupos de Conexão (GCs) e Congregações
     const [connectionGroupId, setConnectionGroupId] = useState<string>('');
     const [availableGroups, setAvailableGroups] = useState<GroupItem[]>([]);
+    const [congregationId, setCongregationId] = useState<string>('');
+    const [availableCongregations, setAvailableCongregations] = useState<{ id: string; name: string; isHeadquarter: boolean }[]>([]);
 
     const isSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN') || currentUser?.role === 'SUPER_ADMIN';
     const isPastor = currentUser?.roles?.includes('PASTOR') || currentUser?.role === 'PASTOR';
@@ -114,6 +121,14 @@ export default function MemberProfile() {
                 // showError not needed for silent load failures
             }
 
+            // Buscar lista de Congregações disponíveis (se SUPER_ADMIN)
+            if (isSuperAdmin) {
+                try {
+                    const congRes = await api.get('/congregations');
+                    setAvailableCongregations(congRes.data);
+                } catch (err) {}
+            }
+
             // Buscar dados do membro
             const response = await api.get('/members');
             const found = response.data.find((m: Member) => m.id === id);
@@ -123,6 +138,7 @@ export default function MemberProfile() {
                 setFullName(found.fullName);
                 setSelectedRoles(found.roles && found.roles.length > 0 ? found.roles : ['MEMBER']);
                 setConnectionGroupId(found.connectionGroupId || found.connectionGroup?.id || '');
+                setCongregationId(found.congregationId || found.congregation?.id || '');
                 if (found.memberProfile) {
                     setPhone(found.memberProfile.phone || '');
                     setAddress(found.memberProfile.address || '');
@@ -178,6 +194,7 @@ export default function MemberProfile() {
                 baptismDate: baptismDate ? new Date(baptismDate).toISOString() : null,
                 ministries: selectedMinistries,
                 connectionGroupId: connectionGroupId || null,
+                congregationId: isSuperAdmin ? (congregationId || null) : undefined,
                 roles: selectedRoles
             });
 
@@ -268,6 +285,25 @@ export default function MemberProfile() {
                                         </div>
                                     );
                                 })}
+                            </div>
+
+                            {/* Seleção de Filial / Congregação */}
+                            <div className="pt-3 border-t border-slate-800 space-y-2">
+                                <label className="text-xs font-semibold text-amber-400 flex items-center gap-1.5">
+                                    <Shield size={14} /> Filial / Congregação
+                                </label>
+                                <select
+                                    value={congregationId}
+                                    onChange={(e) => setCongregationId(e.target.value)}
+                                    className="w-full bg-slate-950/80 border border-slate-800 focus:border-amber-500 rounded-xl py-2.5 px-3 text-xs text-white outline-none cursor-pointer"
+                                >
+                                    <option value="">Congregação Padrão (Sede Central)</option>
+                                    {availableCongregations.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name} {c.isHeadquarter ? '(Sede)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     )}

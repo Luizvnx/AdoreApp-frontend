@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, UserCheck, Eye, EyeOff } from 'lucide-react';
-import type { UserRole } from '../types';
+import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-//import { UI_MESSAGES } from '../constants/messages';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -13,7 +11,6 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('SUPER_ADMIN');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +23,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await login(email, password, role);
+      await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
     } finally {
@@ -105,36 +102,6 @@ export default function Login() {
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
-            </div>
-          </div>
-
-          {/* Role selector (Mock role selection for testing) */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-              Perfil de Acesso (Teste)
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 pointer-events-none">
-                <UserCheck size={18} />
-              </span>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                className="w-full bg-slate-950/80 border border-slate-800 hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white outline-none transition-all appearance-none cursor-pointer"
-              >
-                <option value="SUPER_ADMIN" className="bg-slate-900">SUPER_ADMIN (Pastor/Diretoria)</option>
-                <option value="FINANCE_ADMIN" className="bg-slate-900">FINANCE_ADMIN (Tesoureiro)</option>
-                <option value="ADMIN_WELCOME" className="bg-slate-900">ADMIN_WELCOME (Acolhimento)</option>
-                <option value="GC_SUPERVISOR" className="bg-slate-900">GC_SUPERVISOR (Supervisor de GC)</option>
-                <option value="GC_LEADER" className="bg-slate-900">GC_LEADER (Líder de GC)</option>
-                <option value="WORSHIP_LEADER" className="bg-slate-900">WORSHIP_LEADER (Líder de Louvor)</option>
-                <option value="MEMBER" className="bg-slate-900">MEMBER (Membro Comum)</option>
-              </select>
-              <span className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 pointer-events-none">
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                  <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                </svg>
-              </span>
             </div>
           </div>
 

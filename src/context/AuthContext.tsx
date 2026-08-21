@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
-import type { User, UserRole } from '../types';
+import type { User } from '../types';
 import { useToast } from './ToastContext';
 import { getApiErrorMessage } from '../utils/messageHandler';
 import { UI_MESSAGES } from '../constants/messages';
@@ -9,7 +9,7 @@ interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string, overrideRole?: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -26,16 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const response = await api.get('/auth/me');
         if (response.data?.user) {
-          const savedOverrideRole = sessionStorage.getItem('overrideRole') as UserRole | null;
-          if (savedOverrideRole) {
-            setUser({
-              ...response.data.user,
-              role: savedOverrideRole,
-              roles: [savedOverrideRole]
-            });
-          } else {
-            setUser(response.data.user);
-          }
+          setUser(response.data.user);
         }
       } catch (err) {
         // Sessão não ativa ou expirada
@@ -51,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     restoreSession();
   }, []);
 
-  const login = async (email: string, password: string, overrideRole?: UserRole) => {
+  const login = async (email: string, password: string) => {
     try {
       // O backend validará a credencial, definirá o Cookie HttpOnly e retornará o token e usuário
       const response = await api.post('/auth/login', { email, password });
@@ -66,19 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('sessionToken', response.data.token);
       }
 
-      let userObj = response.data.user;
-      if (overrideRole) {
-        sessionStorage.setItem('overrideRole', overrideRole);
-        userObj = {
-          ...userObj,
-          role: overrideRole,
-          roles: [overrideRole]
-        };
-      } else {
-        sessionStorage.removeItem('overrideRole');
-      }
-
-      setUser(userObj);
+      sessionStorage.removeItem('overrideRole');
+      setUser(response.data.user);
     } catch (err: any) {
       showError(getApiErrorMessage(err, UI_MESSAGES.ERRORS.LOGIN_FAILED));
       throw err;
@@ -89,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await api.post('/auth/logout');
     } catch (err) {
-      // Falha silenciosa ou avisa se precisar
+      // Falha silenciosa
     } finally {
       sessionStorage.removeItem('sessionToken');
       localStorage.removeItem('sessionToken');
