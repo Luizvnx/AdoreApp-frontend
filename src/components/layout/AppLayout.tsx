@@ -19,10 +19,10 @@ export const AppLayout: React.FC = () => {
     return userRoles.some(r => roles.includes(r));
   };
 
-  const canSeeVisitors = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR']);
-  const canSeeMembers = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR']);
-  const canSeeChurchHub = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER']);
-  const canSeeFinance = hasAnyRole(['FINANCE_ADMIN']);
+  const canSeeVisitors = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'PASTOR', 'DIRECTOR']);
+  const canSeeMembers = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'PASTOR', 'DIRECTOR']);
+  const canSeeChurchHub = hasAnyRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER', 'PASTOR', 'DIRECTOR']);
+  const canSeeFinance = hasAnyRole(['FINANCE_ADMIN', 'PASTOR', 'DIRECTOR']);
 
   const navItems = [
     {

@@ -52,26 +52,36 @@ export const CongregationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user]);
 
   // Se o usuário não for SUPER_ADMIN, a congregação selecionada trava na congregação dele
+  const effectiveCongregationId = React.useMemo(() => {
+    if (user && !user.roles?.includes('SUPER_ADMIN') && user.role !== 'SUPER_ADMIN') {
+      return user.congregationId || 'ALL';
+    }
+    return selectedCongregationId;
+  }, [user, selectedCongregationId]);
+
   useEffect(() => {
     if (user && !user.roles?.includes('SUPER_ADMIN') && user.role !== 'SUPER_ADMIN') {
-      if (user.congregationId) {
+      if (user.congregationId && selectedCongregationId !== user.congregationId) {
         setSelectedCongregationId(user.congregationId);
       }
     }
-  }, [user]);
+  }, [user, selectedCongregationId]);
 
   const currentCongregationName = React.useMemo(() => {
-    if (selectedCongregationId === 'ALL') return 'Visão Global (Sede + Filiais)';
-    const found = congregations.find(c => c.id === selectedCongregationId);
+    if (effectiveCongregationId === 'ALL') return 'Visão Global (Sede + Filiais)';
+    const found = congregations.find(c => c.id === effectiveCongregationId);
     return found ? `${found.name}${found.isHeadquarter ? ' (Sede)' : ''}` : 'Congregação Selecionada';
-  }, [selectedCongregationId, congregations]);
+  }, [effectiveCongregationId, congregations]);
 
   return (
     <CongregationContext.Provider
       value={{
         congregations,
-        selectedCongregationId,
-        setSelectedCongregationId,
+        selectedCongregationId: effectiveCongregationId,
+        setSelectedCongregationId: (id: string) => {
+          if (user && !user.roles?.includes('SUPER_ADMIN') && user.role !== 'SUPER_ADMIN') return;
+          setSelectedCongregationId(id);
+        },
         loading,
         fetchCongregations,
         currentCongregationName

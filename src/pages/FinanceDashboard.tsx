@@ -5,6 +5,7 @@ import { exportFinanceToPDF, exportFinanceToExcel } from '../utils/reportUtils';
 import { useFinance, type Transaction } from '../hooks/useFinance';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const getPaymentMethodLabel = (method?: string) => {
   switch (method) {
@@ -20,6 +21,8 @@ const getPaymentMethodLabel = (method?: string) => {
 export default function FinanceDashboard() {
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
+  const { user } = useAuth();
+  const isDirector = user?.roles?.includes('DIRECTOR') || user?.role === 'DIRECTOR';
 
   const {
     loading,
@@ -267,24 +270,26 @@ export default function FinanceDashboard() {
           </div>
         </div>
 
-        {/* Ações Rápidas */}
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={() => { setTransactionForm({ ...transactionForm, type: 'INCOME', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
-            className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
-          >
-            <TrendingUp size={24} />
-            <span className="text-sm font-semibold">Nova Entrada</span>
-          </button>
+        {/* Ações Rápidas - Ocultas para Diretoria */}
+        {!isDirector && (
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => { setTransactionForm({ ...transactionForm, type: 'INCOME', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
+              className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
+            >
+              <TrendingUp size={24} />
+              <span className="text-sm font-semibold">Nova Entrada</span>
+            </button>
 
-          <button
-            onClick={() => { setTransactionForm({ ...transactionForm, type: 'EXPENSE', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
-            className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
-          >
-            <TrendingDown size={24} />
-            <span className="text-sm font-semibold">Nova Saída</span>
-          </button>
-        </div>
+            <button
+              onClick={() => { setTransactionForm({ ...transactionForm, type: 'EXPENSE', paymentMethod: 'PIX' }); setShowTransactionModal(true); }}
+              className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-colors"
+            >
+              <TrendingDown size={24} />
+              <span className="text-sm font-semibold">Nova Saída</span>
+            </button>
+          </div>
+        )}
 
         {/* Histórico Recente e Gastos Fixos */}
         <div className="grid md:grid-cols-2 gap-6">
@@ -328,13 +333,15 @@ export default function FinanceDashboard() {
                       <span className={`text-sm font-bold ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-red-400'}`}>
                         {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                       </span>
-                      <button
-                        onClick={() => handleEditTransaction(t)}
-                        className="text-slate-500 hover:text-cyan-400 transition-colors"
-                        title="Editar Lançamento"
-                      >
-                        <Edit2 size={14} />
-                      </button>
+                      {!isDirector && (
+                        <button
+                          onClick={() => handleEditTransaction(t)}
+                          className="text-slate-500 hover:text-cyan-400 transition-colors"
+                          title="Editar Lançamento"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -348,9 +355,11 @@ export default function FinanceDashboard() {
               <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
                 <CalendarIcon size={16} className="text-amber-500" /> Gastos Fixos Programados
               </h2>
-              <button onClick={() => setShowFixedExpenseModal(true)} className="text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1">
-                <PlusCircle size={14} /> Adicionar
-              </button>
+              {!isDirector && (
+                <button onClick={() => setShowFixedExpenseModal(true)} className="text-cyan-400 hover:text-cyan-300 text-xs flex items-center gap-1">
+                  <PlusCircle size={14} /> Adicionar
+                </button>
+              )}
             </div>
             <div className="space-y-3">
               {fixedExpenses.length === 0 ? (
@@ -364,9 +373,11 @@ export default function FinanceDashboard() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-bold text-amber-400">{formatCurrency(f.amount)}</span>
-                      <button onClick={() => deleteFixedExpense(f.id)} className="text-slate-600 hover:text-red-400">
-                        <ArrowLeft size={14} className="rotate-45" />
-                      </button>
+                      {!isDirector && (
+                        <button onClick={() => deleteFixedExpense(f.id)} className="text-slate-600 hover:text-red-400">
+                          <ArrowLeft size={14} className="rotate-45" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
@@ -500,13 +511,15 @@ export default function FinanceDashboard() {
                         {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
                       </td>
                       <td className="py-4 text-center">
-                        <button
-                          onClick={() => handleEditTransaction(t)}
-                          className="text-slate-500 hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100"
-                          title="Editar Lançamento"
-                        >
-                          <Edit2 size={16} />
-                        </button>
+                        {!isDirector && (
+                          <button
+                            onClick={() => handleEditTransaction(t)}
+                            className="text-slate-500 hover:text-cyan-400 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Editar Lançamento"
+                          >
+                            <Edit2 size={16} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

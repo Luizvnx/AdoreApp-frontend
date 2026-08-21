@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -41,7 +41,9 @@ interface GroupItem {
 }
 
 const ALL_SYSTEM_ROLES: { role: UserRole; label: string; description: string }[] = [
-    { role: 'SUPER_ADMIN', label: 'SUPER ADMIN (Pastor / Diretoria)', description: 'Acesso total a todas as telas, métricas e gestão.' },
+    { role: 'SUPER_ADMIN', label: 'SUPER ADMIN (Administrador Global)', description: 'Acesso total a todas as filiais e gestão global.' },
+    { role: 'PASTOR', label: 'PASTOR (Admin da Filial)', description: 'Acesso total de gestão dentro da própria filial.' },
+    { role: 'DIRECTOR', label: 'DIRETORIA (Auxiliar da Filial)', description: 'Gestão da filial com restrições financeiras e sistêmicas.' },
     { role: 'ADMIN_WELCOME', label: 'ADMIN WELCOME (Acolhimento)', description: 'Gestão de visitantes e conversão para membros.' },
     { role: 'GC_SUPERVISOR', label: 'GC SUPERVISOR (Supervisor de GCs)', description: 'Gestão de múltiplos Grupos de Conexão.' },
     { role: 'GC_LEADER', label: 'GC LEADER (Líder de GC)', description: 'Gestão de membros e visitantes do seu GC.' },
@@ -80,6 +82,13 @@ export default function MemberProfile() {
     const [availableGroups, setAvailableGroups] = useState<GroupItem[]>([]);
 
     const isSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN') || currentUser?.role === 'SUPER_ADMIN';
+    const isPastor = currentUser?.roles?.includes('PASTOR') || currentUser?.role === 'PASTOR';
+    const isDirector = currentUser?.roles?.includes('DIRECTOR') || currentUser?.role === 'DIRECTOR';
+    
+    // Regra: "As demais categorias, exceto membros e lideres de louvor e de GC podem editar os membros"
+    const cannotEditOthers = currentUser?.roles?.some(r => ['MEMBER', 'WORSHIP_LEADER', 'GC_LEADER'].includes(r as UserRole));
+    const canEdit = isSuperAdmin || currentUser?.id === id || (!cannotEditOthers);
+    const canDelete = isSuperAdmin || isPastor || isDirector;
 
     useEffect(() => {
         fetchData();
@@ -148,6 +157,7 @@ export default function MemberProfile() {
     };
 
     const toggleMinistry = (name: string) => {
+        if (!canEdit) return;
         setSelectedMinistries(prev =>
             prev.includes(name) ? prev.filter(m => m !== name) : [...prev, name]
         );
@@ -176,6 +186,19 @@ export default function MemberProfile() {
         } catch (error) {
             showError(getApiErrorMessage(error, UI_MESSAGES.ERRORS.UPDATE_PROFILE));
         } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Tem certeza que deseja excluir este membro? Esta ação não pode ser desfeita.')) return;
+        setSaving(true);
+        try {
+            await api.delete(`/members/${id}`);
+            showSuccess('Membro excluído com sucesso.');
+            navigate('/membros');
+        } catch (error) {
+            showError(getApiErrorMessage(error, 'Erro ao excluir membro.'));
             setSaving(false);
         }
     };
@@ -380,20 +403,23 @@ export default function MemberProfile() {
                                     <Users size={14} className="text-cyan-400" />
                                     Grupo de Conexão (GC)
                                 </label>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/gcs')}
-                                    className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 hover:underline transition-all"
-                                >
-                                    <Plus size={12} />
-                                    Gerenciar GCs
-                                </button>
+                                {canEdit && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/gcs')}
+                                        className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 hover:underline transition-all"
+                                    >
+                                        <Plus size={12} />
+                                        Gerenciar GCs
+                                    </button>
+                                )}
                             </div>
 
                             <select
                                 value={connectionGroupId}
                                 onChange={(e) => setConnectionGroupId(e.target.value)}
-                                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all cursor-pointer"
+                                disabled={!canEdit}
+                                className={`w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
                             >
                                 <option value="">Nenhum GC vinculado</option>
                                 {availableGroups.map((g) => (
@@ -411,18 +437,20 @@ export default function MemberProfile() {
                                     <Briefcase size={14} className="text-blue-400" />
                                     Cargos & Ministérios na Igreja
                                 </label>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/cargos')}
-                                    className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 hover:underline transition-all"
-                                >
-                                    <Plus size={12} />
-                                    Gerenciar Cargos
-                                </button>
+                                {canEdit && (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/cargos')}
+                                        className="text-[11px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 hover:underline transition-all"
+                                    >
+                                        <Plus size={12} />
+                                        Gerenciar Cargos
+                                    </button>
+                                )}
                             </div>
 
                             <p className="text-[11px] text-slate-500">
-                                Clique para selecionar ou desmarcar os cargos deste membro:
+                                {canEdit ? 'Clique para selecionar ou desmarcar os cargos deste membro:' : 'Cargos e Ministérios atribuídos a este membro:'}
                             </p>
 
                             <div className="flex flex-wrap gap-2 pt-1">
@@ -460,20 +488,34 @@ export default function MemberProfile() {
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-[0.98] text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-                    >
-                        {saving ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <>
-                                <Save size={20} />
-                                Salvar Alterações
-                            </>
-                        )}
-                    </button>
+                    {canEdit && (
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 active:scale-[0.98] text-white font-semibold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                        >
+                            {saving ? (
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <>
+                                    <Save size={20} />
+                                    Salvar Alterações
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    {canDelete && (
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={saving}
+                            className="w-full bg-slate-900 border border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 active:scale-[0.98] text-red-500 font-semibold py-4 rounded-xl transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 mt-4"
+                        >
+                            <Trash2 size={20} />
+                            Excluir Membro
+                        </button>
+                    )}
                 </form>
             </main>
         </div>
