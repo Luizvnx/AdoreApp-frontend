@@ -53,6 +53,7 @@ export default function ServiceMetrics() {
   const [serviceDate, setServiceDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [preacher, setPreacher] = useState('');
   const [notes, setNotes] = useState('');
 
   const handleCreateAttendance = async (e: React.FormEvent) => {
@@ -73,6 +74,7 @@ export default function ServiceMetrics() {
       serviceName: selectedName.trim(),
       attendanceCount: Number(attendanceCount),
       serviceDate,
+      preacher: preacher.trim(),
       notes: notes.trim()
     });
 
@@ -80,6 +82,7 @@ export default function ServiceMetrics() {
       setServiceName('');
       setCustomServiceName('');
       setAttendanceCount('');
+      setPreacher('');
       setNotes('');
     }
   };
@@ -440,6 +443,20 @@ export default function ServiceMetrics() {
                   </div>
                 </div>
 
+                {/* Quem pregou / Preletor */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                    Quem pregou / Preletor (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={preacher}
+                    onChange={e => setPreacher(e.target.value)}
+                    placeholder="Ex: Pr. João Santos, Ev. Maria Silva"
+                    className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-2xl py-3 px-4 text-sm text-white placeholder-slate-500 outline-none transition-all touch-manipulation"
+                  />
+                </div>
+
                 {/* Observações Opcionais */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
@@ -449,7 +466,7 @@ export default function ServiceMetrics() {
                     type="text"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
-                    placeholder="Ex: Culto chuvoso / Presença de pregador convidado"
+                    placeholder="Ex: Culto chuvoso / Presença de visitantes especiais"
                     className="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-2xl py-3 px-4 text-sm text-white placeholder-slate-500 outline-none transition-all touch-manipulation"
                   />
                 </div>
@@ -507,6 +524,11 @@ export default function ServiceMetrics() {
                             {new Date(item.date).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
+                        {item.preacher && (
+                          <span className="text-[11px] font-semibold text-cyan-300 flex items-center gap-1 mt-1">
+                            🎤 Pregou: {item.preacher}
+                          </span>
+                        )}
                         {item.notes && (
                           <p className="text-[11px] text-slate-400 mt-1 truncate">
                             {item.notes}

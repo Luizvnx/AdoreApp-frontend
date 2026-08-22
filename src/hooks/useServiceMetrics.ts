@@ -40,6 +40,7 @@ export interface ServiceRecord {
   date: string;
   serviceName: string;
   attendanceCount: number;
+  preacher?: string | null;
   notes?: string | null;
   createdBy?: {
     fullName: string;
@@ -96,13 +97,14 @@ export function useServiceMetrics() {
     fetchData();
   }, []);
 
-  const createAttendance = async (data: { serviceName: string, attendanceCount: number, serviceDate: string, notes: string }) => {
+  const createAttendance = async (data: { serviceName: string, attendanceCount: number, serviceDate: string, preacher?: string, notes: string }) => {
     try {
       setSaving(true);
       await api.post('/attendance', {
         date: data.serviceDate,
         serviceName: data.serviceName,
         attendanceCount: data.attendanceCount,
+        preacher: data.preacher,
         notes: data.notes
       });
       showSuccess(UI_MESSAGES.SUCCESS.ATTENDANCE_REGISTERED);
