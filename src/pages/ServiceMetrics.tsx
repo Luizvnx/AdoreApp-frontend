@@ -95,7 +95,7 @@ export default function ServiceMetrics() {
   const maxServiceAvg = Math.max(...serviceStats.map(s => s.avgPeople), 1);
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans flex flex-col pt-safe pb-28 sm:pb-12 box-border">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans flex flex-col pb-28 sm:pb-12 box-border">
       {/* Background glow visual effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-10%] w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] rounded-full bg-cyan-500/10 blur-[130px]" />

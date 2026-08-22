@@ -131,7 +131,7 @@ export const AppLayout: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0 relative flex flex-col">
         {/* Barra Superior Elegante com Seletor de Congregação */}
-        <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 py-2 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
+        <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 pt-safe pb-2.5 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
             <div className="p-1 sm:p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20 shrink-0">
               <Building size={14} className="sm:w-4 sm:h-4" />

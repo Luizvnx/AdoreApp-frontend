@@ -53,7 +53,7 @@ export default function VisitorRegistration() {
 
     return (
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
-            <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center gap-4 sticky top-0 z-10 pt-safe">
+            <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
                 <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
                     <ArrowLeft size={24} />
                 </button>

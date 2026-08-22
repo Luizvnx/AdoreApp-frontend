@@ -66,7 +66,7 @@ export default function Dashboard() {
   }, [canSeeVisitors, canSeeMembers, user, selectedCongregationId, showError]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full pt-safe animate-in fade-in zoom-in-95 duration-500">
+    <div className="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full animate-in fade-in zoom-in-95 duration-500">
 
       {/* Welcome Banner */}
       <header className="bg-slate-900 border border-slate-700 p-6 rounded-sm">
