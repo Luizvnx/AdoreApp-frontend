@@ -152,7 +152,8 @@ export default function WhatsAppAutomation() {
       showSuccess('Mensagem de teste enviada com sucesso no WhatsApp!');
       setTestPhone('');
     } catch (err: any) {
-      showError(getApiErrorMessage(err, 'Falha ao enviar mensagem de teste. Verifique a conexão com o WhatsApp.'));
+      const serverErr = err.response?.data?.error || err.response?.data?.message;
+      showError(serverErr || getApiErrorMessage(err, 'Falha ao enviar mensagem de teste. Verifique se o número possui WhatsApp ativo.'));
     } finally {
       setSendingTest(false);
     }
