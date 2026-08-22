@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -43,9 +43,9 @@ export default function Login() {
 
         {/* App Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20 mb-4 flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-              <Shield className="text-cyan-400" size={32} />
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-600 to-blue-600 p-1 shadow-lg shadow-cyan-500/30 mb-4 flex items-center justify-center">
+            <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center overflow-hidden p-1">
+              <img src="/apple-touch-icon.png" alt="AvivaApp Logo" className="w-full h-full object-cover rounded-full" />
             </div>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">

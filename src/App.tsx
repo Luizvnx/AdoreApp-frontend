@@ -15,6 +15,7 @@ import MinistryManagement from './pages/MinistryManagement';
 import GroupManagement from './pages/GroupManagement';
 import ServiceMetrics from './pages/ServiceMetrics';
 import FinanceDashboard from './pages/FinanceDashboard';
+import WhatsAppAutomation from './pages/WhatsAppAutomation';
 
 // Hubs
 import VisitorsHub from './pages/hubs/VisitorsHub';
@@ -95,6 +96,11 @@ const App: React.FC = () => {
                             {/* Módulo Financeiro / Tesouraria */}
                             <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'FINANCE_ADMIN']} />}>
                                 <Route path="/financeiro" element={<FinanceDashboard />} />
+                            </Route>
+
+                            {/* Módulo WhatsApp & Automações */}
+                            <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'PASTOR', 'DIRECTOR', 'ADMIN_WELCOME', 'GC_SUPERVISOR']} />}>
+                                <Route path="/whatsapp" element={<WhatsAppAutomation />} />
                             </Route>
                         </Route>
 

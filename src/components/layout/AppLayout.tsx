@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2, MoreHorizontal, X } from 'lucide-react';
+import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2, MoreHorizontal, X, MessageCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 import { useCongregation } from '../../context/CongregationContext';
@@ -55,6 +55,13 @@ export const AppLayout: React.FC = () => {
       show: canSeeVisitors,
     },
     {
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      icon: <MessageCircle size={20} />,
+      path: '/whatsapp',
+      show: canSeeVisitors,
+    },
+    {
       id: 'members',
       label: UI_MESSAGES.LABELS.NAV_MEMBERS,
       icon: <Users size={20} />,
@@ -95,11 +102,14 @@ export const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex flex-col w-64 border-r border-slate-800 bg-slate-900 h-screen sticky top-0">
-        <div className="p-6 border-b border-slate-800">
-          <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
-            AvivaApp
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">Olá, {user?.name}</p>
+        <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+          <img src="/apple-touch-icon.png" alt="AvivaApp Logo" className="w-9 h-9 rounded-full object-cover bg-slate-950 p-0.5 border border-cyan-500/30 shadow-md shrink-0" />
+          <div>
+            <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
+              AvivaApp
+            </h1>
+            <p className="text-xs text-slate-400">Olá, {user?.name}</p>
+          </div>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map(item => (
