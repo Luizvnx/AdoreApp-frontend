@@ -22,7 +22,6 @@ export default function WhatsAppAutomation() {
     connected: boolean;
     state: string;
     instanceName: string;
-    apiUrl?: string;
     qrCodeBase64?: string | null;
     pairCode?: string | null;
     message?: string;
@@ -258,18 +257,15 @@ export default function WhatsAppAutomation() {
                 <div className="w-full bg-amber-950/40 border border-amber-800/60 rounded-2xl p-5 text-left space-y-3 font-sans my-2">
                   <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                     <AlertCircle size={18} />
-                    Servidor Evolution API Offline / Não Encontrado
+                    Servidor WhatsApp Offline / Inacessível
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    A API do sistema tentou se conectar com a Evolution API no endereço <code className="text-cyan-300 font-mono">{status.apiUrl || 'http://localhost:8080'}</code>, mas o serviço não está rodando no momento.
+                    A API do sistema não conseguiu se conectar com a Evolution API no momento.
                   </p>
                   <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs font-mono space-y-2 text-slate-300">
-                    <span className="text-amber-400 font-bold block">Como rodar localmente via Docker (1 comando):</span>
-                    <code className="text-cyan-300 select-all block bg-slate-900 p-2.5 rounded-lg border border-slate-800 overflow-x-auto text-[11px]">
-                      docker run -d --name evolution-api -p 8080:8080 -e AUTHENTICATION_API_KEY=4296083A4600474181F6959BA361399E atendai/evolution-api:v2.1.1
-                    </code>
-                    <span className="text-slate-400 text-[11px] block pt-1 font-sans">
-                      💡 Se você usa a Evolution API hospedada na nuvem (Railway, Render ou VPS), basta configurar o endereço correto e a API key no arquivo <code>AdoreApp-Api/.env</code>.
+                    <span className="text-amber-400 font-bold block font-sans">Como resolver:</span>
+                    <span className="text-slate-400 text-[11px] block font-sans">
+                      💡 Certifique-se de que a Evolution API esteja em execução no servidor (Railway/VPS) e que as credenciais no arquivo <code>AdoreApp-Api/.env</code> estejam corretas.
                     </span>
                   </div>
                 </div>
