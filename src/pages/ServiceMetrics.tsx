@@ -526,7 +526,7 @@ export default function ServiceMetrics() {
                         </div>
                         {item.preacher && (
                           <span className="text-[11px] font-semibold text-cyan-300 flex items-center gap-1 mt-1">
-                            🎤 Pregou: {item.preacher}
+                            Pregou: {item.preacher}
                           </span>
                         )}
                         {item.notes && (

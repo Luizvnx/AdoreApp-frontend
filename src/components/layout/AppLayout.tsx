@@ -41,6 +41,13 @@ export const AppLayout: React.FC = () => {
       show: isSuperAdmin,
     },
     {
+      id: 'church',
+      label: UI_MESSAGES.LABELS.NAV_CHURCH,
+      icon: <Briefcase size={20} />,
+      path: '/hub/igreja',
+      show: canSeeChurchHub,
+    },
+    {
       id: 'congregations',
       label: 'Filiais',
       icon: <Building2 size={20} />,
@@ -55,13 +62,6 @@ export const AppLayout: React.FC = () => {
       show: canSeeVisitors,
     },
     {
-      id: 'whatsapp',
-      label: 'WhatsApp',
-      icon: <MessageCircle size={20} />,
-      path: '/whatsapp',
-      show: canSeeVisitors,
-    },
-    {
       id: 'members',
       label: UI_MESSAGES.LABELS.NAV_MEMBERS,
       icon: <Users size={20} />,
@@ -69,18 +69,18 @@ export const AppLayout: React.FC = () => {
       show: canSeeMembers,
     },
     {
-      id: 'church',
-      label: UI_MESSAGES.LABELS.NAV_CHURCH,
-      icon: <Briefcase size={20} />,
-      path: '/hub/igreja',
-      show: canSeeChurchHub,
-    },
-    {
       id: 'finance',
       label: UI_MESSAGES.LABELS.NAV_FINANCE,
       icon: <Wallet size={20} />,
       path: '/financeiro',
       show: canSeeFinance,
+    },
+    {
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      icon: <MessageCircle size={20} />,
+      path: '/whatsapp',
+      show: canSeeVisitors,
     },
     {
       id: 'profile',
@@ -179,9 +179,8 @@ export const AppLayout: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(item.path)}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${
-                  isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
-                }`}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${isActive ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                  }`}
               >
                 <div className={`transition-transform duration-300 ${isActive ? '-translate-y-0.5' : ''}`}>
                   {item.icon}
@@ -199,9 +198,8 @@ export const AppLayout: React.FC = () => {
           {useMoreDrawer && (
             <button
               onClick={() => setShowMoreMenu(true)}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${
-                isAnyDrawerItemActive || showMoreMenu ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
-              }`}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative ${isAnyDrawerItemActive || showMoreMenu ? 'text-cyan-400' : 'text-slate-500 hover:text-slate-300'
+                }`}
             >
               <div className={`transition-transform duration-300 ${isAnyDrawerItemActive ? '-translate-y-0.5' : ''}`}>
                 <MoreHorizontal size={20} />
@@ -219,11 +217,11 @@ export const AppLayout: React.FC = () => {
 
       {/* Drawer Bottom Sheet "Mais" para Mobile */}
       {showMoreMenu && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-end"
           onClick={() => setShowMoreMenu(false)}
         >
-          <div 
+          <div
             className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
@@ -246,11 +244,10 @@ export const AppLayout: React.FC = () => {
                       setShowMoreMenu(false);
                       navigate(item.path);
                     }}
-                    className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
-                      isActive
-                        ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 font-bold'
-                        : 'bg-slate-950/60 border-slate-800/80 text-slate-300 hover:bg-slate-800'
-                    }`}
+                    className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${isActive
+                      ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400 font-bold'
+                      : 'bg-slate-950/60 border-slate-800/80 text-slate-300 hover:bg-slate-800'
+                      }`}
                   >
                     <div className={`p-2 rounded-xl ${isActive ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-900 text-slate-400'}`}>
                       {item.icon}
