@@ -42,7 +42,7 @@ export interface DashboardMetrics {
   monthlyHistory: { month: string; income: number; expense: number }[];
 }
 
-export function useFinance() {
+export function useFinance(selectedCongregationId?: string) {
   const { showError, showSuccess } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -56,10 +56,14 @@ export function useFinance() {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const params = (selectedCongregationId && selectedCongregationId !== 'ALL')
+        ? { congregationId: selectedCongregationId }
+        : {};
+
       const [metricsRes, transRes, fixedRes] = await Promise.all([
-        api.get('/finance/dashboard'),
-        api.get('/finance/transactions'),
-        api.get('/finance/fixed-expenses'),
+        api.get('/finance/dashboard', { params }),
+        api.get('/finance/transactions', { params }),
+        api.get('/finance/fixed-expenses', { params }),
       ]);
       setMetrics(metricsRes.data);
       setRecentTransactions(transRes.data.slice(0, 10));
@@ -75,10 +79,14 @@ export function useFinance() {
   const fetchFilteredTransactions = async (monthOrParams: string | object, year?: string, category?: string) => {
     try {
       setLoadingHistory(true);
-      const params = typeof monthOrParams === 'object' 
-        ? monthOrParams 
+      const params: any = typeof monthOrParams === 'object' 
+        ? { ...monthOrParams } 
         : { month: monthOrParams, year, category };
-        
+
+      if (selectedCongregationId && selectedCongregationId !== 'ALL' && !params.congregationId) {
+        params.congregationId = selectedCongregationId;
+      }
+
       const res = await api.get('/finance/transactions', { params });
       setFilteredTransactions(res.data);
       return res.data;
@@ -92,11 +100,15 @@ export function useFinance() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedCongregationId]);
 
   const createTransaction = async (data: any) => {
     try {
-      await api.post('/finance/transactions', data);
+      const payload = { ...data };
+      if (selectedCongregationId && selectedCongregationId !== 'ALL' && !payload.congregationId) {
+        payload.congregationId = selectedCongregationId;
+      }
+      await api.post('/finance/transactions', payload);
       showSuccess('Transação registrada com sucesso!');
       await fetchData();
       return true;
@@ -120,7 +132,11 @@ export function useFinance() {
 
   const createFixedExpense = async (data: any) => {
     try {
-      await api.post('/finance/fixed-expenses', data);
+      const payload = { ...data };
+      if (selectedCongregationId && selectedCongregationId !== 'ALL' && !payload.congregationId) {
+        payload.congregationId = selectedCongregationId;
+      }
+      await api.post('/finance/fixed-expenses', payload);
       showSuccess('Gasto fixo registrado com sucesso!');
       await fetchData();
       return true;

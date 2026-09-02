@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, PlusCircle, Calendar as CalendarIcon, List, CalendarDays, RefreshCw, FileText, Edit2, History, Filter, Search, Download } from 'lucide-react';
+import { ArrowLeft, Wallet, TrendingUp, TrendingDown, DollarSign, PlusCircle, Calendar as CalendarIcon, List, CalendarDays, RefreshCw, FileText, Edit2, History, Filter, Search, Download, Globe, Building2 } from 'lucide-react';
 import { exportFinanceToPDF, exportFinanceToExcel } from '../utils/reportUtils';
 import { useFinance, type Transaction } from '../hooks/useFinance';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useCongregation } from '../context/CongregationContext';
 
 const getPaymentMethodLabel = (method?: string) => {
   switch (method) {
@@ -22,6 +23,8 @@ export default function FinanceDashboard() {
   const navigate = useNavigate();
   const { showError, showSuccess } = useToast();
   const { user } = useAuth();
+  const { selectedCongregationId, setSelectedCongregationId, congregations, currentCongregationName } = useCongregation();
+  const isSuperAdmin = user?.roles?.includes('SUPER_ADMIN') || user?.role === 'SUPER_ADMIN';
   const isDirector = user?.roles?.includes('DIRECTOR') || user?.role === 'DIRECTOR';
 
   const {
@@ -37,7 +40,7 @@ export default function FinanceDashboard() {
     updateTransaction,
     createFixedExpense,
     deleteFixedExpense
-  } = useFinance();
+  } = useFinance(selectedCongregationId);
 
   // Filtros do Histórico Completo
   const [filterMonth, setFilterMonth] = useState(String(new Date().getMonth() + 1));
@@ -57,7 +60,7 @@ export default function FinanceDashboard() {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedHistoryTransaction, setSelectedHistoryTransaction] = useState<Transaction | null>(null);
 
-  // Form de Lançamento com Forma de Pagamento
+  // Form de Lançamento com Forma de Pagamento e Congregação
   const [transactionForm, setTransactionForm] = useState({
     title: '',
     type: 'INCOME',
@@ -66,6 +69,7 @@ export default function FinanceDashboard() {
     category: 'DIZIMO_OFERTA',
     paymentMethod: 'PIX',
     notes: '',
+    congregationId: '',
   });
 
   const [fixedExpenseForm, setFixedExpenseForm] = useState({
@@ -73,6 +77,7 @@ export default function FinanceDashboard() {
     amount: '',
     dueDate: '1',
     notes: '',
+    congregationId: '',
   });
 
   // Configurações do Relatório Personalizado
@@ -105,7 +110,8 @@ export default function FinanceDashboard() {
         title: '',
         amount: '',
         notes: '',
-        paymentMethod: 'PIX'
+        paymentMethod: 'PIX',
+        congregationId: ''
       });
     }
   };
@@ -119,7 +125,8 @@ export default function FinanceDashboard() {
       date: new Date(t.date).toISOString().split('T')[0],
       category: t.category,
       paymentMethod: t.paymentMethod || 'PIX',
-      notes: t.notes || ''
+      notes: t.notes || '',
+      congregationId: (t as any).congregationId || ''
     });
     setShowTransactionModal(true);
   };
@@ -148,6 +155,10 @@ export default function FinanceDashboard() {
         paymentMethod: reportConfig.paymentMethod,
       };
 
+      if (selectedCongregationId && selectedCongregationId !== 'ALL') {
+        params.congregationId = selectedCongregationId;
+      }
+
       let periodTitle = '';
       if (reportConfig.period === 'CUSTOM') {
         params.startDate = reportConfig.startDate;
@@ -166,6 +177,8 @@ export default function FinanceDashboard() {
         const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         periodTitle = `${monthNames[Number(reportConfig.month) - 1]} / ${reportConfig.year}`;
       }
+
+      periodTitle = `[${currentCongregationName}] ${periodTitle}`;
 
       // Adiciona detalhamento do filtro de tipo no título
       if (reportConfig.type === 'INCOME') periodTitle += ' (Somente Entradas)';
@@ -211,7 +224,7 @@ export default function FinanceDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans pb-24 relative overflow-x-hidden">
-      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
+      <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-1.5 shrink-0">
             <ArrowLeft size={22} />
@@ -220,10 +233,39 @@ export default function FinanceDashboard() {
             <h1 className="text-base sm:text-lg font-bold text-white flex items-center gap-2 truncate">
               <Wallet size={18} className="text-emerald-500 shrink-0" /> Tesouraria
             </h1>
-            <p className="text-xs text-emerald-400 truncate">Visão Geral - {metrics?.period}</p>
+            <p className="text-xs text-emerald-400 truncate font-medium">
+              {currentCongregationName} • {metrics?.period}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Seletor de Filial (Branch Switcher) para SUPER_ADMIN */}
+          {isSuperAdmin ? (
+            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl shadow-inner">
+              <Globe size={15} className="text-emerald-400 shrink-0" />
+              <select
+                value={selectedCongregationId}
+                onChange={e => setSelectedCongregationId(e.target.value)}
+                className="bg-transparent text-slate-200 text-xs font-semibold outline-none cursor-pointer max-w-[180px] sm:max-w-[220px] truncate"
+              >
+                <option value="ALL" className="bg-slate-900">Visão Global (Sede + Filiais)</option>
+                {congregations.map(c => (
+                  <option key={c.id} value={c.id} className="bg-slate-900">
+                    {c.name} {c.isHeadquarter ? '(Sede)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">
+              <Building2 size={15} className="text-emerald-400 shrink-0" />
+              <span className="text-slate-200 text-xs font-semibold truncate max-w-[180px]">
+                {currentCongregationName}
+              </span>
+            </div>
+          )}
+
           <button onClick={() => setShowReportModal(true)} title="Gerar Relatório Financeiro" className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow">
             <FileText size={16} /> <span className="hidden xs:inline">Relatórios</span>
           </button>
@@ -557,7 +599,7 @@ export default function FinanceDashboard() {
               <button onClick={() => {
                 setShowTransactionModal(false);
                 setSelectedTransactionId(null);
-                setTransactionForm({ ...transactionForm, title: '', amount: '' });
+                setTransactionForm({ ...transactionForm, title: '', amount: '', congregationId: '' });
               }} className="text-slate-400 hover:text-white">✕</button>
             </div>
             <form onSubmit={handleTransactionSubmit} className="p-5 space-y-4">
@@ -608,6 +650,23 @@ export default function FinanceDashboard() {
                   </select>
                 </div>
               </div>
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-xs text-slate-400">Filial / Congregação</label>
+                  <select
+                    value={transactionForm.congregationId || (selectedCongregationId !== 'ALL' ? selectedCongregationId : '')}
+                    onChange={e => setTransactionForm({ ...transactionForm, congregationId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-emerald-500 outline-none"
+                  >
+                    <option value="">(Usar congregação padrão)</option>
+                    {congregations.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.isHeadquarter ? '(Sede)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <button type="submit" className={`w-full font-bold py-3 rounded-xl mt-2 transition-colors ${transactionForm.type === 'INCOME' ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'}`}>
                 Salvar Lançamento
               </button>
@@ -639,6 +698,23 @@ export default function FinanceDashboard() {
                   <input required type="number" min="1" max="31" value={fixedExpenseForm.dueDate} onChange={e => setFixedExpenseForm({ ...fixedExpenseForm, dueDate: e.target.value })} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-amber-500 outline-none" />
                 </div>
               </div>
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-xs text-slate-400">Filial / Congregação</label>
+                  <select
+                    value={fixedExpenseForm.congregationId || (selectedCongregationId !== 'ALL' ? selectedCongregationId : '')}
+                    onChange={e => setFixedExpenseForm({ ...fixedExpenseForm, congregationId: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 mt-1 text-sm text-slate-300 focus:border-amber-500 outline-none"
+                  >
+                    <option value="">(Usar congregação padrão)</option>
+                    {congregations.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.isHeadquarter ? '(Sede)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 font-bold py-3 rounded-xl mt-2 text-white shadow-lg shadow-amber-500/20 transition-colors">
                 Salvar Gasto Fixo
               </button>
