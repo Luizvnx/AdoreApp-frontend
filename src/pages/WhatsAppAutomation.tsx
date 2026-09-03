@@ -7,6 +7,7 @@ import {
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 export default function WhatsAppAutomation() {
   const navigate = useNavigate();
@@ -377,10 +378,11 @@ export default function WhatsAppAutomation() {
           <form onSubmit={handleSendTest} className="pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
             <div className="w-full sm:flex-1">
               <input
-                type="text"
+                type="tel"
                 value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-                placeholder="Número de teste com DDD (ex: 79999999999)"
+                onChange={(e) => setTestPhone(maskPhoneNumber(e.target.value))}
+                placeholder="Número de teste (ex: (79) 99999-9999)"
+                maxLength={15}
                 className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white outline-none transition-all"
               />
             </div>

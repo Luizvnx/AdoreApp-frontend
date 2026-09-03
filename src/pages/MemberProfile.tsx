@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield, Trash2 } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Save, MapPin, Phone, Briefcase, Check, Plus, Users, Shield, Trash2, Eye } from 'lucide-react';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
+import { ChevronDownIcon } from '@heroicons/react/16/solid';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 import type { UserRole } from '../types';
 
 interface Member {
@@ -140,7 +143,7 @@ export default function MemberProfile() {
                 setConnectionGroupId(found.connectionGroupId || found.connectionGroup?.id || '');
                 setCongregationId(found.congregationId || found.congregation?.id || '');
                 if (found.memberProfile) {
-                    setPhone(found.memberProfile.phone || '');
+                    setPhone(maskPhoneNumber(found.memberProfile.phone) || '');
                     setAddress(found.memberProfile.address || '');
                     setZipCode(found.memberProfile.zipCode || '');
                     setNeighborhood(found.memberProfile.neighborhood || '');
@@ -238,14 +241,39 @@ export default function MemberProfile() {
 
     return (
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
-            <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
-                <button onClick={() => navigate('/membros')} className="text-slate-400 hover:text-white p-2 transition-colors">
-                    <ArrowLeft size={24} />
-                </button>
-                <div>
-                    <h1 className="text-lg font-bold text-white">Perfil do Membro</h1>
-                    <p className="text-xs text-blue-400">Edição de dados completos</p>
+            <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/membros')} className="text-slate-400 hover:text-white p-2 transition-colors">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <div>
+                        <h1 className="text-lg font-bold text-white">Perfil do Membro</h1>
+                        <p className="text-xs text-blue-400">Edição de dados completos</p>
+                    </div>
                 </div>
+
+                <Dropdown>
+                    <DropdownButton outline>
+                        <span>Ações</span>
+                        <ChevronDownIcon className="w-4 h-4 text-slate-400" />
+                    </DropdownButton>
+                    <DropdownMenu align="right">
+                        <DropdownItem href={`/membros/${id}`}>
+                            <Eye className="w-4 h-4 text-cyan-400" />
+                            <span>Visualizar Perfil</span>
+                        </DropdownItem>
+                        <DropdownItem href="/membros">
+                            <Users className="w-4 h-4 text-blue-400" />
+                            <span>Ver Todos Membros</span>
+                        </DropdownItem>
+                        {canDelete && (
+                            <DropdownItem onClick={() => handleDelete()} destructive>
+                                <Trash2 className="w-4 h-4" />
+                                <span>Excluir Membro</span>
+                            </DropdownItem>
+                        )}
+                    </DropdownMenu>
+                </Dropdown>
             </header>
 
             <main className="p-4 sm:p-6 max-w-lg mx-auto w-full">
@@ -342,10 +370,11 @@ export default function MemberProfile() {
                                     <Phone size={14} /> Telefone
                                 </label>
                                 <input
-                                    type="text"
+                                    type="tel"
                                     value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    placeholder="(99) 99999-9999"
+                                    onChange={(e) => setPhone(maskPhoneNumber(e.target.value))}
+                                    placeholder="(00) 00000-0000"
+                                    maxLength={15}
                                     className="w-full max-w-full min-w-0 bg-slate-950/80 border border-slate-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
                                 />
                             </div>

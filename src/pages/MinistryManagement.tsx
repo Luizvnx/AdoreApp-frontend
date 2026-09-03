@@ -83,7 +83,7 @@ export default function MinistryManagement() {
       {/* Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/hub/igreja')}
           className="text-slate-400 hover:text-white p-2 transition-colors"
         >
           <ArrowLeft size={24} />

@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 export default function VisitorRegistration() {
     const navigate = useNavigate();
@@ -31,6 +32,8 @@ export default function VisitorRegistration() {
         if (type === 'checkbox') {
             const checked = (e.target as HTMLInputElement).checked;
             setFormData(prev => ({ ...prev, [name]: checked }));
+        } else if (name === 'phone') {
+            setFormData(prev => ({ ...prev, phone: maskPhoneNumber(value) }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -54,7 +57,7 @@ export default function VisitorRegistration() {
     return (
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
             <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
-                <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
+                <button onClick={() => navigate('/hub/visitantes')} className="text-slate-400 hover:text-white p-2">
                     <ArrowLeft size={24} />
                 </button>
                 <div>
@@ -108,7 +111,7 @@ export default function VisitorRegistration() {
                                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500">
                                     <Phone size={16} />
                                 </span>
-                                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-white outline-none" />
+                                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="(00) 00000-0000" maxLength={15} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-white outline-none" />
                             </div>
                         </div>
                     </section>

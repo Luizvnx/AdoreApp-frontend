@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "axios": "^1.19.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",

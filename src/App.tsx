@@ -10,6 +10,7 @@ import VisitorRegistration from './pages/VisitorRegistration';
 import VisitorList from './pages/VisitorList';
 import MemberList from './pages/MemberList';
 import MemberProfile from './pages/MemberProfile';
+import MemberView from './pages/MemberView';
 import UserProfile from './pages/UserProfile';
 import MinistryManagement from './pages/MinistryManagement';
 import GroupManagement from './pages/GroupManagement';
@@ -79,8 +80,9 @@ const App: React.FC = () => {
                             <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN_WELCOME', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
                                 <Route path="/visitantes" element={<VisitorList />} />
                                 <Route path="/membros" element={<MemberList />} />
-                                <Route path="/membros/:id" element={<MemberProfile />} />
+                                <Route path="/membros/:id" element={<MemberView />} />
                                 <Route path="/membros/:id/editar" element={<MemberProfile />} />
+                                <Route path="/membros/:id/edit" element={<MemberProfile />} />
                             </Route>
 
                             {/* Módulo de Cargos & Ministérios */}

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Shield, ChevronRight, Briefcase, Users, Plus, X, UserPlus, Church } from 'lucide-react';
+import { ArrowLeft, UserCheck, Briefcase, Users, Plus, X, UserPlus, Church, Eye, Edit3, Trash2 } from 'lucide-react';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
+import { ChevronDownIcon } from '@heroicons/react/16/solid';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 interface Member {
     id: string;
@@ -33,6 +36,17 @@ interface CongregationItem {
     isHeadquarter: boolean;
 }
 
+const ROLE_LABELS: Record<string, { label: string; color: string }> = {
+    SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-500/20 text-purple-300 border-purple-500/40' },
+    PASTOR: { label: 'Pastor', color: 'bg-amber-500/20 text-amber-300 border-amber-500/40' },
+    DIRECTOR: { label: 'Diretoria', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' },
+    ADMIN_WELCOME: { label: 'Acolhimento', color: 'bg-teal-500/20 text-teal-300 border-teal-500/40' },
+    GC_SUPERVISOR: { label: 'Supervisor GC', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' },
+    GC_LEADER: { label: 'Líder GC', color: 'bg-blue-500/20 text-blue-300 border-blue-500/40' },
+    WORSHIP_LEADER: { label: 'Líder Louvor', color: 'bg-pink-500/20 text-pink-300 border-pink-500/40' },
+    MEMBER: { label: 'Membro', color: 'bg-slate-800 text-slate-300 border-slate-700' },
+};
+
 export default function MemberList() {
     const navigate = useNavigate();
     const { user: currentUser } = useAuth();
@@ -53,8 +67,23 @@ export default function MemberList() {
     const [availableCongregations, setAvailableCongregations] = useState<CongregationItem[]>([]);
 
     const isSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN') || currentUser?.role === 'SUPER_ADMIN';
+    const isPastor = currentUser?.roles?.includes('PASTOR') || currentUser?.role === 'PASTOR';
+    const isDirector = currentUser?.roles?.includes('DIRECTOR') || currentUser?.role === 'DIRECTOR';
     const cannotEditOthers = currentUser?.roles?.some(r => ['MEMBER', 'WORSHIP_LEADER', 'GC_LEADER'].includes(r));
     const canCreate = isSuperAdmin || (!cannotEditOthers);
+    const canDelete = isSuperAdmin || isPastor || isDirector;
+
+    const handleDeleteMember = async (id: string, name: string) => {
+        if (window.confirm(`Tem certeza que deseja excluir o membro "${name}"? Esta ação não pode ser desfeita.`)) {
+            try {
+                await api.delete(`/members/${id}`);
+                showSuccess('Membro excluído com sucesso!');
+                fetchMembers();
+            } catch (error) {
+                showError(getApiErrorMessage(error, 'Erro ao excluir membro.'));
+            }
+        }
+    };
 
     useEffect(() => {
         fetchMembers();
@@ -130,7 +159,7 @@ export default function MemberList() {
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
             <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2 transition-colors">
+                    <button onClick={() => navigate('/hub/membros')} className="text-slate-400 hover:text-white p-2 transition-colors">
                         <ArrowLeft size={24} />
                     </button>
                     <div>
@@ -173,28 +202,50 @@ export default function MemberList() {
                             const ministriesList = member.memberProfile?.ministries || [];
                             const gcName = member.connectionGroup?.name;
 
+                            // Ordenar e formatar papéis para exibição limpa
+                            const userRoles = member.roles || ['MEMBER'];
+                            const displayRoles = userRoles.slice(0, 2);
+                            const extraRolesCount = userRoles.length - displayRoles.length;
+
                             return (
                                 <div
                                     key={member.id}
-                                    onClick={() => navigate(`/membros/${member.id}`)}
-                                    className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col gap-3 cursor-pointer transition-all group"
+                                    className="bg-slate-900/60 border border-slate-800 hover:border-blue-500/50 rounded-2xl p-4 flex flex-col gap-3 transition-all group"
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl shadow-inner">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div
+                                            onClick={() => navigate(`/membros/${member.id}`)}
+                                            className="flex items-start gap-3 cursor-pointer min-w-0 flex-1"
+                                        >
+                                            <div className="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl shadow-inner shrink-0 mt-0.5">
                                                 <UserCheck size={20} />
                                             </div>
-                                            <div>
-                                                <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
+                                            <div className="min-w-0 flex-1 space-y-1.5">
+                                                <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors text-base truncate">
                                                     {member.fullName}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                    <span className="flex items-center gap-1">
-                                                        <Shield size={10} className="text-blue-500" />
-                                                        {member.roles.join(', ')}
-                                                    </span>
+
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    {displayRoles.map((r) => {
+                                                        const badge = ROLE_LABELS[r] || { label: r, color: 'bg-slate-800 text-slate-300 border-slate-700' };
+                                                        return (
+                                                            <span
+                                                                key={r}
+                                                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${badge.color}`}
+                                                            >
+                                                                {badge.label}
+                                                            </span>
+                                                        );
+                                                    })}
+
+                                                    {extraRolesCount > 0 && (
+                                                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border bg-slate-800 text-slate-400 border-slate-700" title={userRoles.slice(2).join(', ')}>
+                                                            +{extraRolesCount}
+                                                        </span>
+                                                    )}
+
                                                     {gcName && (
-                                                        <span className="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                        <span className="bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0">
                                                             <Users size={10} />
                                                             GC {gcName}
                                                         </span>
@@ -202,7 +253,31 @@ export default function MemberList() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <ChevronRight size={18} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+
+                                        <div className="shrink-0">
+                                            <Dropdown>
+                                                <DropdownButton outline>
+                                                    <span>Opções</span>
+                                                    <ChevronDownIcon className="w-4 h-4 text-slate-400" />
+                                                </DropdownButton>
+                                                <DropdownMenu align="right">
+                                                    <DropdownItem href={`/membros/${member.id}`}>
+                                                        <Eye className="w-4 h-4 text-blue-400" />
+                                                        <span>Visualizar</span>
+                                                    </DropdownItem>
+                                                    <DropdownItem href={`/membros/${member.id}/editar`}>
+                                                        <Edit3 className="w-4 h-4 text-cyan-400" />
+                                                        <span>Editar</span>
+                                                    </DropdownItem>
+                                                    {canDelete && (
+                                                        <DropdownItem onClick={() => handleDeleteMember(member.id, member.fullName)} destructive>
+                                                            <Trash2 className="w-4 h-4" />
+                                                            <span>Excluir</span>
+                                                        </DropdownItem>
+                                                    )}
+                                                </DropdownMenu>
+                                            </Dropdown>
+                                        </div>
                                     </div>
 
                                     {ministriesList.length > 0 && (
@@ -293,10 +368,11 @@ export default function MemberList() {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-slate-300">Telefone (Opcional)</label>
                                     <input
-                                        type="text"
+                                        type="tel"
                                         value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="(99) 99999-9999"
+                                        onChange={(e) => setPhone(maskPhoneNumber(e.target.value))}
+                                        placeholder="(00) 00000-0000"
+                                        maxLength={15}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white focus:border-blue-500 outline-none"
                                     />
                                 </div>

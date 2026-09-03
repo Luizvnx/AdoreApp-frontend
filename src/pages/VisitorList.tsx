@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Trash2, Phone, UserPlus, UserCheck, Edit3, Mail, X, Save } from 'lucide-react';
+import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
+import { ChevronDownIcon } from '@heroicons/react/16/solid';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 interface Visitor {
     id: string;
@@ -92,7 +95,7 @@ export default function VisitorList() {
         setEditFormData({
             fullName: visitor.fullName || '',
             email: visitor.email || '',
-            phone: visitor.phone || '',
+            phone: maskPhoneNumber(visitor.phone) || '',
             neighborhood: visitor.neighborhood || '',
             fullAddress: visitor.fullAddress || '',
             wantsToJoinGC: visitor.wantsToJoinGC || false,
@@ -120,7 +123,7 @@ export default function VisitorList() {
         <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-16">
             <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/dashboard')} className="text-slate-400 hover:text-white p-2">
+                    <button onClick={() => navigate('/hub/visitantes')} className="text-slate-400 hover:text-white p-2">
                         <ArrowLeft size={24} />
                     </button>
                     <div>
@@ -170,22 +173,26 @@ export default function VisitorList() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => openEditModal(visitor)}
-                                            className="text-slate-400 hover:text-cyan-400 p-2 transition-colors"
-                                            title="Editar Visitante"
-                                        >
-                                            <Edit3 size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(visitor.id)}
-                                            className="text-red-500/70 hover:text-red-500 p-2 transition-colors"
-                                            title="Excluir Visitante"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
+                                    <Dropdown>
+                                        <DropdownButton outline>
+                                            <span>Opções</span>
+                                            <ChevronDownIcon className="w-4 h-4 text-slate-400" />
+                                        </DropdownButton>
+                                        <DropdownMenu align="right">
+                                            <DropdownItem onClick={() => openEditModal(visitor)}>
+                                                <Edit3 className="w-4 h-4 text-cyan-400" />
+                                                <span>Editar Dados</span>
+                                            </DropdownItem>
+                                            <DropdownItem onClick={() => handleConvert(visitor.id)}>
+                                                <UserCheck className="w-4 h-4 text-emerald-400" />
+                                                <span>Tornar Membro</span>
+                                            </DropdownItem>
+                                            <DropdownItem onClick={() => handleDelete(visitor.id)} destructive>
+                                                <Trash2 className="w-4 h-4" />
+                                                <span>Excluir</span>
+                                            </DropdownItem>
+                                        </DropdownMenu>
+                                    </Dropdown>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 mt-1 pt-3 border-t border-slate-800/80">
@@ -264,9 +271,11 @@ export default function VisitorList() {
                                 <div>
                                     <label className="text-xs font-semibold text-slate-400 uppercase">Telefone / Whats</label>
                                     <input
-                                        type="text"
+                                        type="tel"
                                         value={editFormData.phone}
-                                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                        onChange={(e) => setEditFormData({ ...editFormData, phone: maskPhoneNumber(e.target.value) })}
+                                        placeholder="(00) 00000-0000"
+                                        maxLength={15}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-1 text-sm text-white outline-none focus:border-cyan-500 transition-all"
                                     />
                                 </div>

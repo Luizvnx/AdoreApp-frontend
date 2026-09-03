@@ -109,7 +109,7 @@ export default function ServiceMetrics() {
       <header className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-2 border-b border-slate-800/80">
         <div className="flex items-center justify-between gap-3">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/hub/igreja')}
             className="p-2.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-all shrink-0 active:scale-95 touch-manipulation"
           >
             <ArrowLeft size={20} />

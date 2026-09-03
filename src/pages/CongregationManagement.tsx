@@ -6,6 +6,7 @@ import {
   Building2, Plus, Edit2, Trash2, MapPin, Phone,
   Users, UserCheck, ShieldCheck, CheckCircle2, X, Layers
 } from 'lucide-react';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 export default function CongregationManagement() {
   const { showError, showSuccess } = useToast();
@@ -339,10 +340,11 @@ export default function CongregationManagement() {
                     Telefone de Contato
                   </label>
                   <input
-                    type="text"
+                    type="tel"
                     value={form.phone}
-                    onChange={e => setForm({ ...form, phone: e.target.value })}
+                    onChange={e => setForm({ ...form, phone: maskPhoneNumber(e.target.value) })}
                     placeholder="(00) 00000-0000"
+                    maxLength={15}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                   />
                 </div>

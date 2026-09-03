@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { maskPhoneNumber } from '../utils/phoneUtils';
 
 export default function UserProfile() {
     const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function UserProfile() {
                     setFormData({
                         fullName: userData.name || '',
                         email: userData.email || '',
-                        phone: prof.phone || '',
+                        phone: maskPhoneNumber(prof.phone) || '',
                         password: '',
                         birthDate: prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : '',
                         maritalStatus: prof.maritalStatus || '',
@@ -63,7 +64,11 @@ export default function UserProfile() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'phone') {
+            setFormData(prev => ({ ...prev, phone: maskPhoneNumber(value) }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -193,7 +198,7 @@ export default function UserProfile() {
                                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
                                     <Phone size={16} />
                                 </span>
-                                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-white focus:border-cyan-500 outline-none transition-colors" />
+                                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="(00) 00000-0000" maxLength={15} className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 pl-10 pr-4 mt-1 text-sm text-white focus:border-cyan-500 outline-none transition-colors" />
                             </div>
                         </div>
 

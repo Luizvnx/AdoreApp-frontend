@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Users, Plus, Trash2, Sparkles, MapPin, Calendar, 
+import {
+  ArrowLeft, Users, Plus, Trash2, Sparkles, MapPin, Calendar,
   UserCheck, MessageCircle, Edit2, X, Clock, User
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
+import { formatWhatsAppUrl } from '../utils/phoneUtils';
 
 export interface LeaderInfo {
   id: string;
@@ -60,7 +61,7 @@ export interface MemberOption {
 export default function GroupManagement() {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
-  
+
   const [groups, setGroups] = useState<ConnectionGroupItem[]>([]);
   const [availableMembers, setAvailableMembers] = useState<MemberOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,20 +181,14 @@ export default function GroupManagement() {
     }
   };
 
-  const formatWhatsAppUrl = (phone?: string | null) => {
-    if (!phone) return null;
-    const digits = phone.replace(/\D/g, '');
-    if (!digits) return null;
-    const fullPhone = digits.length <= 11 ? `55${digits}` : digits;
-    return `https://wa.me/${fullPhone}`;
-  };
+
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-white font-sans pb-20">
       {/* Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/hub/igreja')}
           className="text-slate-400 hover:text-white p-2 transition-colors"
         >
           <ArrowLeft size={24} />
@@ -479,8 +474,8 @@ export default function GroupManagement() {
                   <p className="text-xs text-slate-400">Informações detalhadas e membros</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setSelectedGroupDetail(null)} 
+              <button
+                onClick={() => setSelectedGroupDetail(null)}
                 className="text-slate-400 hover:text-white p-1"
               >
                 <X size={20} />
