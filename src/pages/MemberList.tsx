@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, Briefcase, Users, Plus, X, UserPlus, Church, Eye, Edit3, Trash2 } from 'lucide-react';
+import { ArrowLeft, Briefcase, Users, Plus, X, UserPlus, Church, Eye, Edit3, Trash2 } from 'lucide-react';
 import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
 import { ChevronDownIcon } from '@heroicons/react/16/solid';
 import { api } from '../services/api';
@@ -10,16 +10,20 @@ import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
 import { maskPhoneNumber } from '../utils/phoneUtils';
 
+import { Avatar } from '@/components/avatar';
+
 interface Member {
     id: string;
     fullName: string;
     email: string;
     roles: string[];
+    avatarUrl?: string | null;
     connectionGroup?: {
         id: string;
         name: string;
     } | null;
     memberProfile?: {
+        avatarUrl?: string | null;
         baptismDate?: string;
         ministries: string[];
     };
@@ -217,9 +221,12 @@ export default function MemberList() {
                                             onClick={() => navigate(`/membros/${member.id}`)}
                                             className="flex items-start gap-3 cursor-pointer min-w-0 flex-1"
                                         >
-                                            <div className="bg-blue-500/20 text-blue-400 p-2.5 rounded-xl shadow-inner shrink-0 mt-0.5">
-                                                <UserCheck size={20} />
-                                            </div>
+                                            <Avatar
+                                                src={member.avatarUrl || member.memberProfile?.avatarUrl}
+                                                initials={member.fullName ? member.fullName.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'M'}
+                                                square
+                                                className="w-11 h-11 shrink-0 text-xs font-bold border border-slate-700/80 shadow-md mt-0.5"
+                                            />
                                             <div className="min-w-0 flex-1 space-y-1.5">
                                                 <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors text-base truncate">
                                                     {member.fullName}

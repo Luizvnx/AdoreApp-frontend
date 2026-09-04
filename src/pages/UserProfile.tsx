@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut, Users, Briefcase } from 'lucide-react';
+import { ArrowLeft, Save, User, MapPin, Lock, Camera, Mail, Phone, Calendar, LogOut, Users, Briefcase, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
 import { maskPhoneNumber } from '../utils/phoneUtils';
+import { Avatar } from '../components/avatar';
 
 export default function UserProfile() {
     const navigate = useNavigate();
-    const { user: currentUser, logout } = useAuth();
+    const { user: currentUser, logout, updateUser } = useAuth();
     const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         fullName: '',
@@ -40,6 +45,7 @@ export default function UserProfile() {
                 const userData = response.data?.user;
                 if (userData) {
                     const prof = userData.memberProfile || {};
+                    setAvatarUrl(userData.avatarUrl || prof.avatarUrl || null);
                     setFormData({
                         fullName: userData.name || '',
                         email: userData.email || '',
@@ -62,6 +68,104 @@ export default function UserProfile() {
         fetchProfile();
     }, [currentUser, navigate]);
 
+    const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 300;
+                    const MAX_HEIGHT = 300;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(dataUrl);
+                    } else {
+                        reject(new Error('Falha ao processar imagem'));
+                    }
+                };
+                img.onerror = () => reject(new Error('Falha ao carregar arquivo de imagem'));
+                img.src = event.target?.result as string;
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            showError('Selecione um arquivo de imagem válido (JPG, PNG, WEBP).');
+            return;
+        }
+
+        try {
+            setUploadingPhoto(true);
+            const compressedBase64 = await compressImage(file);
+
+            setAvatarUrl(compressedBase64);
+            updateUser({ avatarUrl: compressedBase64 });
+
+            if (currentUser?.id) {
+                await api.put(`/members/${currentUser.id}`, {
+                    fullName: formData.fullName || currentUser.name,
+                    avatarUrl: compressedBase64
+                });
+            }
+
+            showSuccess('Foto de perfil atualizada com sucesso!');
+        } catch (error) {
+            showError(getApiErrorMessage(error, 'Erro ao enviar foto de perfil.'));
+        } finally {
+            setUploadingPhoto(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const handleRemovePhoto = async () => {
+        try {
+            setUploadingPhoto(true);
+            setAvatarUrl(null);
+            updateUser({ avatarUrl: null });
+
+            if (currentUser?.id) {
+                await api.put(`/members/${currentUser.id}`, {
+                    fullName: formData.fullName || currentUser.name,
+                    avatarUrl: null
+                });
+            }
+
+            showSuccess('Foto de perfil removida.');
+        } catch (error) {
+            showError('Erro ao remover foto de perfil.');
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === 'phone') {
@@ -78,6 +182,7 @@ export default function UserProfile() {
         try {
             await api.put(`/members/${currentUser?.id}`, {
                 fullName: formData.fullName,
+                avatarUrl: avatarUrl,
                 phone: formData.phone,
                 address: formData.address,
                 zipCode: formData.zipCode,
@@ -85,6 +190,11 @@ export default function UserProfile() {
                 maritalStatus: formData.maritalStatus,
                 birthDate: formData.birthDate,
                 ...(formData.password ? { password: formData.password } : {})
+            });
+
+            updateUser({
+                name: formData.fullName,
+                avatarUrl: avatarUrl
             });
 
             showSuccess(UI_MESSAGES.SUCCESS.PROFILE_UPDATED);
@@ -97,12 +207,15 @@ export default function UserProfile() {
 
     const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-    // Função para confirmar o Logout
     const confirmLogout = async () => {
         setShowLogoutModal(false);
         await logout();
         navigate('/');
     };
+
+    const userInitials = formData.fullName
+        ? formData.fullName.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+        : 'U';
 
     if (fetching) {
         return (
@@ -117,12 +230,12 @@ export default function UserProfile() {
             {/* Header Fixo */}
             <header className="bg-slate-900 border-b border-slate-800 px-4 py-4 flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 transition-colors">
+                    <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white p-2 transition-colors cursor-pointer">
                         <ArrowLeft size={24} />
                     </button>
                     <div>
                         <h1 className="text-lg font-bold text-white">Meu Perfil</h1>
-                        <p className="text-xs text-cyan-400">Gerencie sua conta</p>
+                        <p className="text-xs text-cyan-400">Gerencie sua conta e foto de perfil</p>
                     </div>
                 </div>
             </header>
@@ -130,24 +243,55 @@ export default function UserProfile() {
             <main className="p-6 max-w-2xl mx-auto space-y-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    {/* Seção do Avatar */}
+                    {/* Input Oculto para Seleção da Foto */}
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept="image/jpeg,image/png,image/webp,image/jpg"
+                        className="hidden"
+                    />
+
+                    {/* Seção do Avatar com Upload */}
                     <div className="flex flex-col items-center justify-center py-4">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-700 p-1 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                                <div className="w-full h-full bg-slate-900 rounded-full flex items-center justify-center overflow-hidden">
-                                    <User size={40} className="text-slate-400" />
-                                </div>
+                        <div className="relative group">
+                            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-700 p-1 shadow-[0_0_25px_rgba(6,182,212,0.35)] relative">
+                                <Avatar
+                                    src={avatarUrl}
+                                    initials={userInitials}
+                                    className="w-full h-full text-2xl font-extrabold rounded-full"
+                                />
+                                {uploadingPhoto && (
+                                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center">
+                                        <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Botão Câmera / Upload */}
                             <button
                                 type="button"
-                                className="absolute bottom-0 right-0 bg-slate-800 border border-slate-700 p-2 rounded-full text-cyan-400 hover:bg-slate-700 transition-colors"
-                                title="Alterar foto"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingPhoto}
+                                className="absolute bottom-0 right-0 bg-cyan-600 border border-slate-700 p-2.5 rounded-full text-white hover:bg-cyan-500 transition-all shadow-lg cursor-pointer active:scale-95"
+                                title="Alterar foto de perfil"
                             >
-                                <Camera size={16} />
+                                <Camera size={18} />
                             </button>
                         </div>
-                        <h2 className="mt-4 font-semibold text-lg">{formData.fullName || 'Usuário'}</h2>
-                        <span className="text-xs text-slate-400 bg-slate-900 px-3 py-1 rounded-full mt-1 border border-slate-800">
+
+                        {avatarUrl && (
+                            <button
+                                type="button"
+                                onClick={handleRemovePhoto}
+                                className="mt-2 text-xs text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer transition-colors"
+                            >
+                                <Trash2 size={12} /> Remover foto
+                            </button>
+                        )}
+
+                        <h2 className="mt-3 font-semibold text-lg">{formData.fullName || 'Usuário'}</h2>
+                        <span className="text-xs text-cyan-400 bg-cyan-500/10 px-3 py-1 rounded-full mt-1 border border-cyan-500/20 font-medium">
                             {currentUser?.role?.replace('_', ' ')}
                         </span>
                     </div>
@@ -296,7 +440,7 @@ export default function UserProfile() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer"
                     >
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -312,7 +456,7 @@ export default function UserProfile() {
                 <button
                     type="button"
                     onClick={() => setShowLogoutModal(true)}
-                    className="w-full bg-slate-900 border border-red-500/30 text-red-400 hover:bg-red-500/10 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2"
+                    className="w-full bg-slate-900 border border-red-500/30 text-red-400 hover:bg-red-500/10 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2 cursor-pointer"
                 >
                     <LogOut size={20} /> Sair da Conta
                 </button>
@@ -335,13 +479,13 @@ export default function UserProfile() {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowLogoutModal(false)}
-                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors"
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={confirmLogout}
-                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20"
+                                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 cursor-pointer"
                             >
                                 Sim, Sair
                             </button>

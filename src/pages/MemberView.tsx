@@ -9,11 +9,14 @@ import { maskPhoneNumber } from '../utils/phoneUtils';
 import { Dropdown, DropdownButton, DropdownItem, DropdownMenu } from '@/components/dropdown';
 import { ChevronDownIcon } from '@heroicons/react/16/solid';
 
+import { Avatar } from '@/components/avatar';
+
 interface Member {
     id: string;
     fullName: string;
     email: string;
     roles: string[];
+    avatarUrl?: string | null;
     congregationId?: string | null;
     congregation?: {
         id: string;
@@ -25,6 +28,7 @@ interface Member {
         name: string;
     };
     memberProfile?: {
+        avatarUrl?: string | null;
         phone?: string;
         address?: string;
         zipCode?: string;
@@ -164,8 +168,12 @@ export default function MemberView() {
             <main className="p-4 sm:p-6 max-w-lg mx-auto w-full space-y-5">
                 {/* Main Hero Card */}
                 <div className="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 flex flex-col items-center text-center space-y-4 shadow-2xl relative overflow-hidden">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-blue-500/30">
-                        {member.fullName.charAt(0).toUpperCase()}
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-400 p-1 shadow-lg shadow-blue-500/30">
+                        <Avatar
+                            src={member.avatarUrl || member.memberProfile?.avatarUrl}
+                            initials={member.fullName ? member.fullName.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'M'}
+                            className="w-full h-full text-2xl font-extrabold rounded-full"
+                        />
                     </div>
 
                     <div className="space-y-1">

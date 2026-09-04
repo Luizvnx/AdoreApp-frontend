@@ -1,16 +1,35 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, UserCheck, Briefcase, Wallet, Settings, ShieldCheck, Building, Building2, MoreHorizontal, X, MessageCircle } from 'lucide-react';
+import { Home, Users, UserCheck, Briefcase, Wallet, ShieldCheck, Building, Building2, MoreHorizontal, X, MessageCircle, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 import { useCongregation } from '../../context/CongregationContext';
+import { Avatar } from '../avatar';
+import {
+  Dropdown,
+  DropdownButton,
+  DropdownDivider,
+  DropdownItem,
+  DropdownLabel,
+  DropdownMenu,
+} from '../dropdown';
+import { NavbarItem } from '../navbar';
+import {
+  ArrowRightStartOnRectangleIcon,
+  ChevronDownIcon,
+  Cog8ToothIcon,
+  UserIcon,
+} from '@heroicons/react/16/solid';
+import { SettingsModal } from '../SettingsModal';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { congregations, selectedCongregationId, setSelectedCongregationId, currentCongregationName } = useCongregation();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   const userRoles = user?.roles || (user?.role ? [user.role] : []);
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN');
@@ -82,13 +101,6 @@ export const AppLayout: React.FC = () => {
       path: '/whatsapp',
       show: canSeeVisitors,
     },
-    {
-      id: 'profile',
-      label: UI_MESSAGES.LABELS.NAV_PROFILE,
-      icon: <Settings size={20} />,
-      path: '/perfil',
-      show: true,
-    }
   ].filter(item => item.show);
 
   // Seleção de itens exibidos na barra inferior mobile (Máximo 4 + Botão "Mais")
@@ -97,6 +109,18 @@ export const AppLayout: React.FC = () => {
   const isAnyDrawerItemActive = useMoreDrawer && navItems.slice(4).some(
     item => location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home')
   );
+
+  const userInitials = user?.name
+    ? user.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase()
+    : 'U';
+
+  const avatarPhoto = user?.avatarUrl || user?.memberProfile?.avatarUrl;
+
+  const confirmLogout = async () => {
+    setShowLogoutModal(false);
+    await logout();
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 flex">
@@ -130,7 +154,7 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0 relative flex flex-col">
-        {/* Barra Superior Elegante com Seletor de Congregação */}
+        {/* Barra Superior Elegante com Seletor de Congregação e Menu de Perfil */}
         <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 pt-safe pb-2.5 flex items-center justify-between font-sans sticky top-0 z-40 shadow-lg">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink">
             <div className="p-1 sm:p-2 bg-cyan-500/10 rounded-xl text-cyan-400 border border-cyan-500/20 shrink-0">
@@ -146,23 +170,68 @@ export const AppLayout: React.FC = () => {
             </div>
           </div>
 
-          {isSuperAdmin && (
-            <div className="flex items-center gap-1 shrink-0 ml-1.5">
-              <Building2 size={14} className="text-slate-400 hidden sm:block shrink-0" />
-              <select
-                value={selectedCongregationId}
-                onChange={(e) => setSelectedCongregationId(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-cyan-400 font-semibold px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer shadow-inner max-w-[115px] xs:max-w-[145px] sm:max-w-[220px] truncate"
-              >
-                <option value="ALL">Visão Global</option>
-                {congregations.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.isHeadquarter ? '(Sede)' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {isSuperAdmin && (
+              <div className="flex items-center gap-1 shrink-0 ml-1.5">
+                <Building2 size={14} className="text-slate-400 hidden sm:block shrink-0" />
+                <select
+                  value={selectedCongregationId}
+                  onChange={(e) => setSelectedCongregationId(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 text-cyan-400 font-semibold px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer shadow-inner max-w-[100px] xs:max-w-[130px] sm:max-w-[220px] truncate"
+                >
+                  <option value="ALL">Visão Global</option>
+                  {congregations.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.isHeadquarter ? '(Sede)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Menu de Perfil no Canto Superior Direito (Desktop & Mobile) */}
+            <Dropdown>
+              <DropdownButton as={NavbarItem} className="p-1 hover:bg-slate-800/80 rounded-xl transition-all cursor-pointer">
+                <Avatar
+                  src={avatarPhoto}
+                  initials={userInitials}
+                  className="w-8 h-8 sm:w-9 sm:h-9"
+                  square
+                />
+                <ChevronDownIcon className="w-4 h-4 text-slate-400 max-sm:hidden" />
+              </DropdownButton>
+              <DropdownMenu className="min-w-64" anchor="bottom end">
+                <div className="px-3 py-2 flex items-center gap-3">
+                  <Avatar
+                    src={avatarPhoto}
+                    initials={userInitials}
+                    className="w-10 h-10 shrink-0"
+                    square
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-white text-xs truncate">{user?.name || 'Usuário'}</span>
+                    <span className="text-[10px] text-cyan-400 font-medium truncate">
+                      {user?.role ? user.role.replace('_', ' ') : 'Membro'}
+                    </span>
+                  </div>
+                </div>
+                <DropdownDivider />
+                <DropdownItem href="/perfil">
+                  <UserIcon className="w-4 h-4 text-cyan-400" />
+                  <DropdownLabel>Meu Perfil</DropdownLabel>
+                </DropdownItem>
+                <DropdownItem onClick={() => setShowSettingsModal(true)}>
+                  <Cog8ToothIcon className="w-4 h-4 text-slate-400" />
+                  <DropdownLabel>Configurações do App</DropdownLabel>
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem onClick={() => setShowLogoutModal(true)} destructive>
+                  <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
+                  <DropdownLabel>Sair da conta</DropdownLabel>
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
         </header>
 
         <div className="flex-1">
@@ -260,6 +329,43 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Logout */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-6">
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                <LogOut size={24} className="text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Sair da Conta</h3>
+              <p className="text-sm text-slate-400">
+                Tem certeza que deseja sair da sua conta? Você precisará fazer login novamente para acessar o aplicativo.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 cursor-pointer"
+              >
+                Sim, Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configurações do App */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </div>
   );
 };

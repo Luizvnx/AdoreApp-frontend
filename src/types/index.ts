@@ -30,6 +30,7 @@ export interface MemberProfileInfo {
     baptismDate?: string | null;
     maritalStatus?: string | null;
     ministries?: string[];
+    avatarUrl?: string | null;
 }
 
 export interface User {
@@ -38,6 +39,7 @@ export interface User {
     email?: string;
     role: UserRole;
     roles?: string[];
+    avatarUrl?: string | null;
     congregationId?: string | null;
     congregation?: { id: string; name: string; isHeadquarter: boolean } | null;
     connectionGroupId?: string | null;

@@ -68,6 +68,7 @@ export interface DropdownButtonProps extends React.ButtonHTMLAttributes<HTMLButt
     color?: 'blue' | 'slate' | 'red' | 'emerald' | 'amber';
     children: React.ReactNode;
     className?: string;
+    as?: React.ElementType;
 }
 
 export function DropdownButton({
@@ -77,9 +78,28 @@ export function DropdownButton({
     children,
     className = '',
     onClick,
+    as: Component,
     ...props
 }: DropdownButtonProps) {
     const { toggleOpen, isOpen } = useDropdown();
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (onClick) onClick(e);
+        toggleOpen();
+    };
+
+    if (Component) {
+        return (
+            <Component
+                aria-expanded={isOpen}
+                onClick={handleClick}
+                className={className}
+                {...props}
+            >
+                {children}
+            </Component>
+        );
+    }
 
     let baseStyles = "inline-flex items-center justify-between gap-2 text-xs font-semibold rounded-xl px-3.5 py-2 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40 active:scale-95";
 
@@ -110,10 +130,7 @@ export function DropdownButton({
         <button
             type="button"
             aria-expanded={isOpen}
-            onClick={(e) => {
-                if (onClick) onClick(e);
-                toggleOpen();
-            }}
+            onClick={handleClick}
             className={`${baseStyles} ${className}`}
             {...props}
         >
@@ -125,15 +142,22 @@ export function DropdownButton({
 export interface DropdownMenuProps {
     children: React.ReactNode;
     align?: 'left' | 'right';
+    anchor?: string;
     className?: string;
 }
 
-export function DropdownMenu({ children, align = 'right', className = '' }: DropdownMenuProps) {
+export function DropdownMenu({ children, align, anchor, className = '' }: DropdownMenuProps) {
     const { isOpen } = useDropdown();
 
     if (!isOpen) return null;
 
-    const alignmentClass = align === 'left' ? 'left-0 origin-top-left' : 'right-0 origin-top-right';
+    let computedAlign = align || 'right';
+    if (anchor) {
+        if (anchor.includes('start')) computedAlign = 'left';
+        if (anchor.includes('end')) computedAlign = 'right';
+    }
+
+    const alignmentClass = computedAlign === 'left' ? 'left-0 origin-top-left' : 'right-0 origin-top-right';
 
     return (
         <div

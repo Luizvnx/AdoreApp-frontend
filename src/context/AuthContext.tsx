@@ -11,6 +11,8 @@ interface AuthContextData {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updatedData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -19,6 +21,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { showError } = useToast();
+
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data?.user) {
+        setUser(response.data.user);
+      }
+    } catch (err) {
+      // Sessão não ativa
+    }
+  };
+
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...updatedData } : null);
+  };
 
   // Ao carregar a aplicação, restaura a sessão através da rota GET /auth/me
   useEffect(() => {
@@ -86,6 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         login,
         logout,
+        updateUser,
+        refreshUser,
       }}
     >
       {children}

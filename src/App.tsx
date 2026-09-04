@@ -25,14 +25,16 @@ import ChurchHub from './pages/hubs/ChurchHub';
 import PastorDashboard from './pages/PastorDashboard';
 
 import { CongregationProvider } from './context/CongregationContext';
+import { SettingsProvider } from './context/SettingsContext';
 import CongregationManagement from './pages/CongregationManagement';
 
 const App: React.FC = () => {
     return (
         <ToastProvider>
             <AuthProvider>
-                <CongregationProvider>
-                    <BrowserRouter>
+                <SettingsProvider>
+                    <CongregationProvider>
+                        <BrowserRouter>
                         <Routes>
                             <Route
                                 path="/"
@@ -109,8 +111,9 @@ const App: React.FC = () => {
                         {/* Redirecionamento fallback */}
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
-                </BrowserRouter>
-            </CongregationProvider>
+                    </BrowserRouter>
+                </CongregationProvider>
+            </SettingsProvider>
         </AuthProvider>
     </ToastProvider>
     );
