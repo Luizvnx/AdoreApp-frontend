@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Users, Plus, Trash2, Sparkles, MapPin, Calendar,
-  UserCheck, MessageCircle, Edit2, X, Clock, User
+  UserCheck, MessageCircle, Edit2, X, Clock, User, Hash
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { UI_MESSAGES } from '../constants/messages';
 import { getApiErrorMessage } from '../utils/messageHandler';
 import { formatWhatsAppUrl } from '../utils/phoneUtils';
+import { WEEKDAY_OPTIONS, fetchAddressByCep, formatCep } from '../utils/cepUtils';
 
 export interface LeaderInfo {
   id: string;
@@ -39,6 +40,9 @@ export interface ConnectionGroupItem {
   id: string;
   name: string;
   neighborhood?: string | null;
+  zipCode?: string | null;
+  address?: string | null;
+  addressNumber?: string | null;
   meetingDay?: string | null;
   meetingTime?: string | null;
   leaderId?: string | null;
@@ -69,10 +73,15 @@ export default function GroupManagement() {
   // Form de Criação / Edição
   const [name, setName] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [address, setAddress] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
   const [meetingDay, setMeetingDay] = useState('');
   const [meetingTime, setMeetingTime] = useState('');
   const [leaderId, setLeaderId] = useState('');
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [loadingCep, setLoadingCep] = useState(false);
+  const [cepFeedback, setCepFeedback] = useState<string | null>(null);
 
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -110,9 +119,13 @@ export default function GroupManagement() {
     setEditingGroupId(group.id);
     setName(group.name);
     setNeighborhood(group.neighborhood || '');
+    setZipCode(group.zipCode ? formatCep(group.zipCode) : '');
+    setAddress(group.address || '');
+    setAddressNumber(group.addressNumber || '');
     setMeetingDay(group.meetingDay || '');
     setMeetingTime(group.meetingTime || '');
     setLeaderId(group.leaderId || group.leader?.id || '');
+    setCepFeedback(null);
     setSelectedGroupDetail(null);
   };
 
@@ -120,9 +133,41 @@ export default function GroupManagement() {
     setEditingGroupId(null);
     setName('');
     setNeighborhood('');
+    setZipCode('');
+    setAddress('');
+    setAddressNumber('');
     setMeetingDay('');
     setMeetingTime('');
     setLeaderId('');
+    setCepFeedback(null);
+  };
+
+  const handleCepChange = async (value: string) => {
+    const formatted = formatCep(value);
+    setZipCode(formatted);
+    setCepFeedback(null);
+
+    const clean = formatted.replace(/\D/g, '');
+    if (clean.length === 8) {
+      try {
+        setLoadingCep(true);
+        const data = await fetchAddressByCep(clean);
+        if (data) {
+          if (data.bairro) setNeighborhood(data.bairro);
+          if (data.logradouro) {
+            setAddress(data.logradouro);
+          }
+          setCepFeedback(`${data.localidade} - ${data.uf}`);
+          showSuccess(`Endereço localizado: ${data.localidade}/${data.uf}`);
+        } else {
+          showError('CEP não encontrado na base dos Correios.');
+        }
+      } catch {
+        showError('Erro ao consultar CEP.');
+      } finally {
+        setLoadingCep(false);
+      }
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -135,6 +180,9 @@ export default function GroupManagement() {
       const payload = {
         name: name.trim(),
         neighborhood: neighborhood.trim() || undefined,
+        zipCode: zipCode.trim() || undefined,
+        address: address.trim() || undefined,
+        addressNumber: addressNumber.trim() || undefined,
         meetingDay: meetingDay.trim() || undefined,
         meetingTime: meetingTime.trim() || undefined,
         leaderId: leaderId || null,
@@ -153,9 +201,13 @@ export default function GroupManagement() {
 
       setName('');
       setNeighborhood('');
+      setZipCode('');
+      setAddress('');
+      setAddressNumber('');
       setMeetingDay('');
       setMeetingTime('');
       setLeaderId('');
+      setCepFeedback(null);
     } catch (err: any) {
       showError(getApiErrorMessage(err, 'Erro ao salvar Grupo de Conexão.'));
     } finally {
@@ -188,7 +240,7 @@ export default function GroupManagement() {
       {/* Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-4 py-3.5 flex items-center gap-4">
         <button
-          onClick={() => navigate('/hub/igreja')}
+          onClick={() => navigate('/hub/gc')}
           className="text-slate-400 hover:text-white p-2 transition-colors"
         >
           <ArrowLeft size={24} />
@@ -274,30 +326,91 @@ export default function GroupManagement() {
             </select>
           </div>
 
+          {/* Campo CEP */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-400">Bairro / Localização (Opcional)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <MapPin size={14} className="text-cyan-400" /> CEP do Local (Opcional)
+              </label>
+              {cepFeedback && (
+                <span className="text-[11px] text-emerald-400 font-medium">
+                  ✓ {cepFeedback}
+                </span>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={zipCode}
+                onChange={(e) => handleCepChange(e.target.value)}
+                placeholder="00000-000 (preenche rua e bairro automaticamente)"
+                maxLength={9}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all pr-10 font-mono"
+              />
+              {loadingCep && (
+                <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-slate-400">Rua / Logradouro (Opcional)</label>
             <input
               type="text"
-              value={neighborhood}
-              onChange={(e) => setNeighborhood(e.target.value)}
-              placeholder="Ex: Centro, Jardins..."
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Preenchido via CEP ou digite o logradouro..."
               className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400">Dia de Encontro</label>
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <Hash size={13} className="text-cyan-400" /> Número da Casa
+              </label>
               <input
                 type="text"
-                value={meetingDay}
-                onChange={(e) => setMeetingDay(e.target.value)}
-                placeholder="Ex: Terça-feira"
+                value={addressNumber}
+                onChange={(e) => setAddressNumber(e.target.value)}
+                placeholder="Ex: 123 ou S/N"
                 className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-400">Horário</label>
+              <label className="text-xs font-semibold text-slate-400">Bairro / Região (Opcional)</label>
+              <input
+                type="text"
+                value={neighborhood}
+                onChange={(e) => setNeighborhood(e.target.value)}
+                placeholder="Preenchido via CEP ou digite aqui..."
+                className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-4 text-sm text-white outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <Calendar size={13} className="text-cyan-400" /> Dia de Encontro
+              </label>
+              <select
+                value={meetingDay}
+                onChange={(e) => setMeetingDay(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl py-3 px-3 text-xs sm:text-sm text-white outline-none transition-all cursor-pointer"
+              >
+                <option value="">Selecione o dia</option>
+                {WEEKDAY_OPTIONS.map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+                <Clock size={13} className="text-cyan-400" /> Horário
+              </label>
               <input
                 type="text"
                 value={meetingTime}
@@ -527,6 +640,17 @@ export default function GroupManagement() {
                     {selectedGroupDetail.meetingDay || 'Não def.'} {selectedGroupDetail.meetingTime ? `às ${selectedGroupDetail.meetingTime}` : ''}
                   </span>
                 </div>
+
+                {selectedGroupDetail.address && (
+                  <div className="col-span-2 pt-2 border-t border-slate-800/60">
+                    <span className="text-slate-500 block font-medium">Endereço do Encontro</span>
+                    <span className="text-slate-200 font-medium text-xs mt-0.5 block leading-relaxed">
+                      {selectedGroupDetail.address}
+                      {selectedGroupDetail.addressNumber ? `, Nº ${selectedGroupDetail.addressNumber}` : ''}
+                      {selectedGroupDetail.zipCode ? ` • CEP: ${selectedGroupDetail.zipCode}` : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -583,18 +707,25 @@ export default function GroupManagement() {
               )}
             </div>
 
-            <div className="flex gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/gcs/gerenciar?id=${selectedGroupDetail.id}`)}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+              >
+                <Users size={14} /> Gerenciar Membros do GC
+              </button>
               <button
                 type="button"
                 onClick={() => handleOpenEdit(selectedGroupDetail)}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 border border-slate-700"
+                className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-semibold py-2.5 px-4 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 border border-slate-700"
               >
-                <Edit2 size={14} /> Editar GC
+                <Edit2 size={14} /> Editar
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedGroupDetail(null)}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition-all"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-xs transition-all"
               >
                 Fechar
               </button>

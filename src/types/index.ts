@@ -9,15 +9,39 @@ export type UserRole =
   | 'WORSHIP_LEADER' 
   | 'MEMBER';
 
+export interface ConnectionGroupMemberSummary {
+    id: string;
+    fullName: string;
+    avatarUrl?: string | null;
+    memberProfile?: {
+        phone?: string | null;
+        avatarUrl?: string | null;
+    } | null;
+}
+
 export interface ConnectionGroupInfo {
     id: string;
     name: string;
     neighborhood?: string | null;
+    zipCode?: string | null;
+    address?: string | null;
+    addressNumber?: string | null;
     meetingDay?: string | null;
     meetingTime?: string | null;
+    leaderId?: string | null;
     leader?: {
+        id?: string;
         fullName: string;
+        memberProfile?: {
+            phone?: string | null;
+            avatarUrl?: string | null;
+        } | null;
     } | null;
+    members?: ConnectionGroupMemberSummary[];
+    _count?: {
+        members: number;
+        visitors: number;
+    };
 }
 
 export interface MemberProfileInfo {

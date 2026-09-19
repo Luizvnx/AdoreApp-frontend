@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, UserCheck, Briefcase, Wallet, ShieldCheck, Building, Building2, MoreHorizontal, X, MessageCircle, LogOut } from 'lucide-react';
+import { Home, Users, UserCheck, Briefcase, Wallet, ShieldCheck, Building, Building2, MoreHorizontal, X, MessageCircle, LogOut, HeartHandshake } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 import { useCongregation } from '../../context/CongregationContext';
@@ -50,6 +50,13 @@ export const AppLayout: React.FC = () => {
       label: UI_MESSAGES.LABELS.NAV_HOME,
       icon: <Home size={20} />,
       path: '/dashboard',
+      show: true,
+    },
+    {
+      id: 'gc',
+      label: 'GC',
+      icon: <HeartHandshake size={20} />,
+      path: '/hub/gc',
       show: true,
     },
     {
@@ -103,11 +110,22 @@ export const AppLayout: React.FC = () => {
     },
   ].filter(item => item.show);
 
+  const isItemActive = (item: { id: string; path: string }) => {
+    if (location.pathname === item.path) return true;
+    if (item.id === 'gc') {
+      return location.pathname.startsWith('/hub/gc') || location.pathname.startsWith('/gcs');
+    }
+    if (item.id === 'church') {
+      return location.pathname.startsWith('/hub/igreja') || location.pathname === '/cargos' || location.pathname === '/metricas';
+    }
+    return location.pathname.startsWith('/' + item.id) && item.id !== 'home';
+  };
+
   // Seleção de itens exibidos na barra inferior mobile (Máximo 4 + Botão "Mais")
   const useMoreDrawer = navItems.length > 5;
   const mainMobileItems = useMoreDrawer ? navItems.slice(0, 4) : navItems;
   const isAnyDrawerItemActive = useMoreDrawer && navItems.slice(4).some(
-    item => location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home')
+    item => isItemActive(item)
   );
 
   const userInitials = user?.name
@@ -136,19 +154,22 @@ export const AppLayout: React.FC = () => {
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home')
-                ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
-                : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
-                }`}
-            >
-              {item.icon}
-              <span className="text-sm">{item.label}</span>
-            </button>
-          ))}
+          {navItems.map(item => {
+            const isActive = isItemActive(item);
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.path)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive
+                  ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                  }`}
+              >
+                {item.icon}
+                <span className="text-sm">{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
 
@@ -243,7 +264,7 @@ export const AppLayout: React.FC = () => {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 pb-safe z-40">
         <div className={`grid ${useMoreDrawer ? 'grid-cols-5' : `grid-cols-${navItems.length}`} items-center px-1 py-1.5`}>
           {mainMobileItems.map(item => {
-            const isActive = location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home');
+            const isActive = isItemActive(item);
             return (
               <button
                 key={item.id}
@@ -305,7 +326,7 @@ export const AppLayout: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               {navItems.map(item => {
-                const isActive = location.pathname === item.path || (location.pathname.startsWith('/' + item.id) && item.id !== 'home');
+                const isActive = isItemActive(item);
                 return (
                   <button
                     key={item.id}

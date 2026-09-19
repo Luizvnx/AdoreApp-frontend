@@ -14,6 +14,7 @@ import MemberView from './pages/MemberView';
 import UserProfile from './pages/UserProfile';
 import MinistryManagement from './pages/MinistryManagement';
 import GroupManagement from './pages/GroupManagement';
+import GCManagement from './pages/GCManagement';
 import ServiceMetrics from './pages/ServiceMetrics';
 import FinanceDashboard from './pages/FinanceDashboard';
 import WhatsAppAutomation from './pages/WhatsAppAutomation';
@@ -22,6 +23,7 @@ import WhatsAppAutomation from './pages/WhatsAppAutomation';
 import VisitorsHub from './pages/hubs/VisitorsHub';
 import MembersHub from './pages/hubs/MembersHub';
 import ChurchHub from './pages/hubs/ChurchHub';
+import GCHub from './pages/hubs/GCHub';
 import PastorDashboard from './pages/PastorDashboard';
 
 import { CongregationProvider } from './context/CongregationContext';
@@ -51,6 +53,8 @@ const App: React.FC = () => {
                                 <Route element={<ProtectedRoute />}>
                                     <Route path="/dashboard" element={<Dashboard />} />
                                     <Route path="/perfil" element={<UserProfile />} />
+                                    <Route path="/hub/gc" element={<GCHub />} />
+                                    <Route path="/gcs" element={<GroupManagement />} />
                                 </Route>
 
                                 {/* Pastor Dashboard & Gestão de Congregações */}
@@ -92,9 +96,9 @@ const App: React.FC = () => {
                                 <Route path="/cargos" element={<MinistryManagement />} />
                             </Route>
 
-                            {/* Módulo de Grupos de Conexão (GCs) */}
-                            <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
-                                <Route path="/gcs" element={<GroupManagement />} />
+                            {/* Módulo de Gerenciamento de GC (Restrito a Lideranças) */}
+                            <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'PASTOR', 'DIRECTOR', 'GC_SUPERVISOR', 'GC_LEADER']} />}>
+                                <Route path="/gcs/gerenciar" element={<GCManagement />} />
                             </Route>
 
                             {/* Módulo Financeiro / Tesouraria */}

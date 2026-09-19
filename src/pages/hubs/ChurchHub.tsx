@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin, BarChart3 } from 'lucide-react';
+import { Briefcase, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UI_MESSAGES } from '../../constants/messages';
 
@@ -12,7 +12,6 @@ export default function ChurchHub() {
   const hasRole = (roles: string[]) => isSuperAdmin || userRoles.some(r => roles.includes(r));
 
   const canManageCargos = hasRole(['WORSHIP_LEADER']);
-  const canManageGCs = hasRole(['GC_SUPERVISOR', 'GC_LEADER']);
   const canSeeMetrics = hasRole(['ADMIN_WELCOME', 'GC_LEADER', 'GC_SUPERVISOR', 'WORSHIP_LEADER']);
 
   return (
@@ -25,20 +24,6 @@ export default function ChurchHub() {
       </header>
 
       <div className="grid gap-4">
-        {canManageGCs && (
-          <button
-            onClick={() => navigate('/gcs')}
-            className="bg-slate-900 border border-slate-800 hover:border-cyan-500/50 rounded-2xl p-6 flex items-center gap-4 group transition-all"
-          >
-            <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-              <MapPin size={24} />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-slate-200 group-hover:text-cyan-400 transition-colors">Grupos de Conexão (GCs)</h3>
-              <p className="text-xs text-slate-500 mt-1">Gerencie os GCs, líderes e endereços de reuniões.</p>
-            </div>
-          </button>
-        )}
 
         {canManageCargos && (
           <button
